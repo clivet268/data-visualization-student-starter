@@ -29,26 +29,19 @@ export function ResponsivePseudoScatterPlot() {
     const svg = svgRef.current;
     if (!svg || dimensions.width === 0 || dimensions.height === 0) return;
 
-    // Use viewBox scaling or explicit scales mapped to container dimensions
-    const xScale = scaleLinear()
-      .domain([0, ORIGINAL_WIDTH])
-      .range([50, dimensions.width - 50]); // add some padding
+    const xScale = scaleLinear().domain([0, ORIGINAL_WIDTH]).range([0, dimensions.width]);
 
-    const yScale = scaleLinear()
-      .domain([0, ORIGINAL_HEIGHT])
-      .range([dimensions.height - 50, 50]); // Inverted for standard Cartesian Y-axis
+    const yScale = scaleLinear().domain([0, ORIGINAL_HEIGHT]).range([0, dimensions.height]);
 
-    const selection = select(svg);
-
-    selection
+    select(svg)
       .selectAll('circle')
       .data(data)
       .join('circle')
       .attr('cx', (d: DataPoint) => xScale(d.x))
       .attr('cy', (d: DataPoint) => yScale(d.y))
       .attr('r', RADIUS)
-      .attr('fill', '#4f46e5'); // Added color so they are visible!
-  }, [dimensions])
+      .attr('fill', '#ff11aa');
+  }, [dimensions]);
 
   return (
     <div ref={divRef} className="relative w-full h-full">
