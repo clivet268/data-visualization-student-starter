@@ -44,7 +44,7 @@ export function ResponsivePseudoScatterPlot() {
 
     const svgSelection = select(svg);
 
-    // 1. Bind data to <g> (group) elements representing each data point
+    // <g> (group) elements for each data point
     const points = svgSelection
       .selectAll<SVGGElement, DataPoint>('.data-point')
       .data(data)
@@ -67,9 +67,9 @@ export function ResponsivePseudoScatterPlot() {
         (exit) => exit.remove(),
       );
 
-    const maxX = max(data, (d) => d.x);
-    const maxY = max(data, (d) => d.y);
-    const indexTickValues = data.map((_, index) => index);
+    //const maxX = max(data, (d) => d.x);
+    //const maxY = max(data, (d) => d.y);
+    //const indexTickValues = data.map((_, index) => index);
 
     const xAxis = axisBottom(xScale).ticks(data.length).tickSizeOuter(0).tickSizeInner(-10);
 
@@ -108,9 +108,9 @@ export function ResponsivePseudoScatterPlot() {
     points
       .select<SVGLineElement>('.stem-line')
       .attr('x1', (d) => xScale(d.x))
-      .attr('y1', (d) => yScale(d.y - RADIUS * d.error)) // Baseline / X-axis position
+      .attr('y1', (d) => yScale(d.y - d.error)) // Baseline / X-axis position
       .attr('x2', (d) => xScale(d.x))
-      .attr('y2', (d) => yScale(d.y + RADIUS * d.error))
+      .attr('y2', (d) => yScale(d.y + d.error))
       .attr('stroke', '#ff0000')
       .attr('stroke-width', 2);
 
@@ -137,7 +137,7 @@ export function ResponsivePseudoScatterPlot() {
           {/* Background */}
           <radialGradient id="bgGradient" cx="50%" cy="50%" r="60%" fx="50%" fy="50%">
             <stop offset="0%" stopColor="#000268" />
-            <stop offset="60%" stopColor="#000268" />
+            <stop offset="80%" stopColor="#000268" />
             <stop offset="100%" stopColor="#000012" />
           </radialGradient>
           <filter id="glow-shadow" x="-50%" y="-50%" width="200%" height="200%">
