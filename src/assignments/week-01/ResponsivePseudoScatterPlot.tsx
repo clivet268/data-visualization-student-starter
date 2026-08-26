@@ -3,7 +3,7 @@ import { select } from 'd3-selection';
 import { scaleLinear } from 'd3-scale';
 import { useDimensions } from './useDimensions';
 import { axisBottom, axisLeft } from 'd3-axis';
-import { max } from 'd3';
+//import { max } from 'd3';
 
 interface DataPoint {
   x: number;
