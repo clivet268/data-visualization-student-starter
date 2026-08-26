@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { select } from 'd3-selection';
 import { scaleLinear } from 'd3-scale';
 import { useDimensions } from './useDimensions';
+import { axisBottom, axisLeft } from 'd3-axis';
+import { max } from 'd3';
 
 interface DataPoint {
   x: number;
@@ -21,6 +23,8 @@ const data: DataPoint[] = [
 const ORIGINAL_WIDTH = 960;
 const ORIGINAL_HEIGHT = 500;
 const RADIUS = 10;
+const PADDING = 50;
+const AXIS_STROKE = '4px';
 
 export function ResponsivePseudoScatterPlot() {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -63,8 +67,44 @@ export function ResponsivePseudoScatterPlot() {
         (exit) => exit.remove(),
       );
 
-    // 2. Update positions for both lines and circles
-    // Line: from the bottom baseline (dimensions.height - 50) up to the data point's Y position
+    const maxX = max(data, (d) => d.x);
+    const maxY = max(data, (d) => d.y);
+    const indexTickValues = data.map((_, index) => index);
+
+    const xAxis = axisBottom(xScale).ticks(data.length).tickSizeOuter(0).tickSizeInner(-10);
+
+    const xAxiselem = svgSelection
+      .select<SVGGElement>('.x-axis')
+      .attr('transform', `translate(0, ${dimensions.height - PADDING})`)
+      .call(xAxis);
+
+    xAxiselem.selectAll('text').style('font-size', '18px').style('color', '#3848dd');
+
+    xAxiselem.selectAll('line').style('stroke-width', AXIS_STROKE).style('color', '#121234');
+
+    xAxiselem.selectAll('.domain').style('stroke-width', AXIS_STROKE).style('color', '#121234');
+
+    const yAxis = axisLeft(yScale)
+      .ticks(10)
+      .tickSizeOuter(0)
+      .tickSizeInner(-(dimensions.width - 2 * PADDING));
+
+    const yAxiselem = svgSelection
+      .select<SVGGElement>('.y-axis')
+      .attr('transform', `translate(${PADDING}, 0)`)
+      .call(yAxis);
+
+    yAxiselem.selectAll('text').style('font-size', '18px').style('color', '#3848dd');
+
+    yAxiselem
+      .selectAll('line')
+      .style('stroke-width', AXIS_STROKE)
+      .style('color', '#121234')
+      .style('opacity', '0.5');
+
+    yAxiselem.selectAll('.domain').style('stroke-width', AXIS_STROKE).style('color', '#121234');
+
+    // Error Bars
     points
       .select<SVGLineElement>('.stem-line')
       .attr('x1', (d) => xScale(d.x))
@@ -74,15 +114,19 @@ export function ResponsivePseudoScatterPlot() {
       .attr('stroke', '#ff0000')
       .attr('stroke-width', 2);
 
-    // Circle: positioned at the data point coordinates
+    // Points
     points
       .select<SVGCircleElement>('circle')
       .attr('cx', (d) => xScale(d.x))
       .attr('cy', (d) => yScale(d.y));
+
+    xAxiselem.raise();
+
+    //yAxiselem.raise();
   }, [dimensions]);
 
   return (
-    <div ref={divRef} className="relative w-full h-full bg-gradient-to-br from-[#000268] via-indigo-950 to-[#00022] border border-[#000268] rounded-lg shadow-sm relative">
+    <div ref={divRef} className="relative w-full h-full rounded-lg shadow-sm relative">
       <svg
         ref={svgRef}
         className="absolute inset-0 w-full h-full"
@@ -90,16 +134,22 @@ export function ResponsivePseudoScatterPlot() {
         aria-label="Responsive scatter plot showing 6 data points"
       >
         <defs>
+          {/* Background */}
+          <radialGradient id="bgGradient" cx="50%" cy="50%" r="60%" fx="50%" fy="50%">
+            <stop offset="0%" stopColor="#000268" />
+            <stop offset="60%" stopColor="#000268" />
+            <stop offset="100%" stopColor="#000012" />
+          </radialGradient>
           <filter id="glow-shadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow
-              dx="0"
-              dy="0"
-              stdDeviation="6"
-              flood-color="#ff11aa"
-              flood-opacity="0.8"
-            />
+            <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor="#ff11aa" floodOpacity="0.8" />
           </filter>
         </defs>
+
+        {/* Background */}
+        <rect width="100%" height="100%" fill="url(#bgGradient)" />
+
+        <g className="x-axis" color="#ffffff" />
+        <g className="y-axis" color="#ffffff" />
       </svg>
     </div>
   );
