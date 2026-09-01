@@ -267,7 +267,7 @@ function LoadCSV() {
         </div>
       </div>
       <div ref={divRef} className="w-full rounded-lg shadow-sm relative overflow-y-hide" style={{height: '96vh'}}>
-        <table border={1} style={{ width: '100%', height: '100%', borderTop: '1px', textAlign: 'left', padding: '0px', fontSize: '10px'}}>
+        <table border={1} style={{ width: `${dimensions}`, height: '100%', borderTop: '1px', textAlign: 'left', padding: '0px', fontSize: '10px'}}>
           <thead>
             <tr style={{ backgroundColor: '#f2f2f2', position: 'sticky', top: 0, zIndex: 1 }}>
               {headers.map((header, i) => (
