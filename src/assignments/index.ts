@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import { ResponsivePseudoScatterPlot } from './week-01/ResponsivePseudoScatterPlot';
+import { LoadAndDisplayTheDataset } from './week-02/LoadAndDisplayTheDataset';
 
 export interface Assignment {
   id: string;
@@ -13,6 +14,11 @@ export const assignments: Assignment[] = [
     name: 'Week 1',
     component: ResponsivePseudoScatterPlot,
   },
+  {
+    id: '2',
+    name: 'Week 2',
+    component: LoadAndDisplayTheDataset,
+  }
 ];
 
 export const assignmentsMap = new Map(assignments.map((ex) => [ex.id, ex]));
