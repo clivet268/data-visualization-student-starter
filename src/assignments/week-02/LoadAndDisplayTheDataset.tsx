@@ -235,9 +235,18 @@ function LoadCSV() {
 
             // Normalize from [min, max] to a 0-1 scale, then scale to 800px
             const yPixel = ((mercatorY - minMercatorY) / (maxMercatorY - minMercatorY)) * 800;
-            const mag = row["mag"];
+            const mag = row.mag;
 
             // TODO make clicking dot scroll to it in the table or overlay info or both idk
+            console.log({
+              id: row.id,
+              lat: row.latitude,
+              lon: row.longitude,
+              mag: row.mag,
+              xPixel,
+              yPixel,
+            });
+
             return (
               <div
                 key={index}
@@ -245,8 +254,8 @@ function LoadCSV() {
                   position: 'absolute',
                   left: `${xPixel}px`,
                   bottom: `${yPixel}px`,
-                  width: `${mag}`,
-                  height: `${mag}`,
+                  width: `${mag}px`,
+                  height: `${mag}px`,
                   backgroundColor: backgrundColorSeverity(mag) + "90",
                   borderRadius: '50%',
                   pointerEvents: 'auto',
@@ -274,10 +283,10 @@ function LoadCSV() {
                     key={colIndex}
                     style={{ 
                       padding: '0px', 
-                      backgroundColor: backgrundColorSeverity(row["mag"]) 
+                      backgroundColor: backgrundColorSeverity(row.mag) 
                     }}
                   >
-                    {row[header]}
+                    {row[header as keyof SeismicEvent]}
                   </td>
                 ))}
               </tr>
