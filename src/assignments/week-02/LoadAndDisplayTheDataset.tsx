@@ -24,12 +24,12 @@ interface SeismicEvent {
   status: string; 
   locationSource: string;
   magSource: string;
+  pixelX: number;
+  pixelY: number;
 }
 
 const baseUrl = import.meta.env.BASE_URL;
 
-
-//  const moveItMoveIt = loadingColor >> load;
 function LoadCSV() {
   const [data, setData] = useState<SeismicEvent[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -54,15 +54,16 @@ function LoadCSV() {
           const values: string[] = [];
           let currentField = '';
           let inQuotes = false;
-
+          
+          //TODO no other entries should have quotes but could be made more robust?
           for (let i = 0; i < row.length; i++) {
             const char = row[i];
           
             if (char === '"') {
-              inQuotes = !inQuotes; // Toggle quote state, skip adding the literal quote character
+              inQuotes = !inQuotes;
             } else if (char === ',' && !inQuotes) {
               values.push(currentField.trim());
-              currentField = ''; // Reset for the next cell
+              currentField = '';
             } else {
               currentField += char;
             }
@@ -70,6 +71,30 @@ function LoadCSV() {
 
           // Push the final field remaining after the loop completes
           values.push(currentField.trim());
+          
+          // I DID NOT THINK THIS WOULD BE SO COMPLEX WHEN I STARTED!
+          // Map the lat and long onto a square 2D map that is bound by 85/-85 degrees lat. 
+          //  This requires funky math and wouldnt be good enought for a final product since
+          //  some earthquakes occur above/below that 85 degree mark
+          //  https://en.wikipedia.org/wiki/Web_Mercator_projection
+          //  https://en.wikipedia.org/wiki/Gudermannian_function#History
+          //  ^ using Using Cayley's notation
+          const xPixel = ((+values[2] + 180) / 360.0) * 800;
+          
+
+          const latRad = (+values[1] * Math.PI) / 180.0;
+          // Logarithmic Mercator stretch (the u in phi = gd(u))
+          const mercatorY = Math.log(Math.tan((Math.PI / 4.0) + (latRad / 2.0)));
+
+          // Pre-calculated at 85° N/S for the chosen map
+          //  +/-85 degrees = +/-1.4835298642 radians
+          //  Math.log(Math.tan((Math.PI / 4.0) + (+/-1.4835298642 / 2.0)) = +/-3.13130133147
+
+          const maxMercatorY = 3.13130133147; 
+          const minMercatorY = -3.13130133147;
+
+          // Normalize and scale to 800px
+          const yPixelscaled = ((mercatorY - minMercatorY) / (maxMercatorY - minMercatorY)) * 800;
           const entry: SeismicEvent = {
             time: values[0],
             latitude: +values[1],
@@ -93,6 +118,8 @@ function LoadCSV() {
             status: values[19],
             locationSource: values[20],
             magSource: values[21],
+            pixelX: xPixel,
+            pixelY: yPixelscaled,
           };
           
           return entry;
@@ -106,26 +133,6 @@ function LoadCSV() {
         setLoading(false);
       });
   }, []);
-  {/* dosent work since its all on same thread when waiting to render
-  if (loading) {
-    loadingColor += 1;
-    console.log(loadingColor)
-    return (
-      <div>
-        <div>
-          Loading dataset...
-        </div>
-        <div
-          style={{
-            backgroundColor: `#${loadingColor.toString(16).padStart(6, '0')}`,
-          }}
-          >
-          Loading dataset...
-        </div>
-      </div>
-      );
-  };
-  */}
 
   if (loading) {
     return (
@@ -137,6 +144,7 @@ function LoadCSV() {
       );
   };
 
+  //TODO account for different scales
   if (data.length === 0) return <div>No data found.</div>;
   const backgrundColorSeverity = (magValue: string | number): string => {
     const numericMag = Number(magValue);
@@ -182,7 +190,7 @@ function LoadCSV() {
           boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
         }}
       >
-        {mapShow ? '✕' : '🌏︎'}
+      {mapShow ? '✕' : '🌏︎'}
       </button>
       <div
         style={{
@@ -214,51 +222,25 @@ function LoadCSV() {
           {
             // TODO make this just one map loop with the info applied to thhe other div too so that theres less looping??
             data.map((row, index) => {
-            // I DID NOT THINK THIS WOULD BE SO COMPLEX WHEN I STARTED!!!!!
-            // TODO redo
-            //const xPixel = ((row["longitude"] + 180) / 360.0) * 800;
-          
-            //const yPixel = ((row["latitude"] + 85) / 170.0) * 800;
-          
-            // 1. Longitude remains perfectly linear (X-Axis)
-            const xPixel = ((row["longitude"] + 180) / 360.0) * 800;
-
-            // 2. Non-linear Web Mercator calculation for Latitude (Y-Axis)
-            const latRad = (row["latitude"] * Math.PI) / 180.0;
-
-            // Calculate logarithmic Mercator stretch
-            const mercatorY = Math.log(Math.tan(Math.PI / 4.0 + latRad / 2.0));
-
-            // Pre-calculated Mercator bounds for exactly 85° N/S
-            const maxMercatorY = 3.131301; 
-            const minMercatorY = -3.131301;
-
-            // Normalize from [min, max] to a 0-1 scale, then scale to 800px
-            const yPixel = ((mercatorY - minMercatorY) / (maxMercatorY - minMercatorY)) * 800;
+            const pixelX = row.pixelX;
+            const pixelY = row.pixelY;
             const mag = row.mag;
 
             // TODO make clicking dot scroll to it in the table or overlay info or both idk
-            console.log({
-              id: row.id,
-              lat: row.latitude,
-              lon: row.longitude,
-              mag: row.mag,
-              xPixel,
-              yPixel,
-            });
 
             return (
               <div
                 key={index}
                 style={{
                   position: 'absolute',
-                  left: `${xPixel}px`,
-                  bottom: `${yPixel}px`,
+                  left: `${pixelX}px`,
+                  bottom: `${pixelY}px`,
                   width: `${mag}px`,
                   height: `${mag}px`,
                   backgroundColor: backgrundColorSeverity(mag) + "90",
                   borderRadius: '50%',
                   pointerEvents: 'auto',
+                  cursor: 'pointer',
                   transform: 'translate(-50%, -50%)',
                 }}
               />
@@ -266,8 +248,22 @@ function LoadCSV() {
           })}
         </div>
       </div>
-      <div ref={divRef} className="w-full rounded-lg shadow-sm relative overflow-y-hide" style={{height: '96vh'}}>
-        <table border={1} style={{ width: `${dimensions}`, height: '100%', borderTop: '1px', textAlign: 'left', padding: '0px', fontSize: '10px'}}>
+      <div 
+        ref={divRef} 
+        className="w-full rounded-lg shadow-sm relative overflow-y-hide"
+        style={{ height: '96vh' }}
+      >
+        <table 
+          border={1} 
+          style={{
+            width: `${dimensions}`,
+            height: '100%',
+            borderTop: '1px',
+            textAlign: 'left', 
+            padding: '0px',
+            fontSize: '10px'
+          }}
+        >
           <thead>
             <tr style={{ backgroundColor: '#f2f2f2', position: 'sticky', top: 0, zIndex: 1 }}>
               {headers.map((header, i) => (
@@ -301,7 +297,8 @@ function LoadCSV() {
 export function LoadAndDisplayTheDataset() {
   return (
     <div>
-      <h2 style={{ height: "4vh", padding: "4px"}}>Earthquake Data Log: August 2026</h2>
+      <h2
+        style={{ height: "4vh", padding: "4px" }}>Earthquake Data Log: August 2026</h2>
       <LoadCSV />
     </div>
   );
