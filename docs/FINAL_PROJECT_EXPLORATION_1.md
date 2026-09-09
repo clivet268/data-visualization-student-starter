@@ -20,3 +20,13 @@ Another thing that I hope will be helpful is breaking it down so someone whos cl
 
 <img width="4032" height="2857" alt="PXL_20260903_010629166" src="https://github.com/user-attachments/assets/7f08d567-4edf-4576-92b7-f660f15bec7b" />
 <img width="4032" height="3024" alt="PXL_20260903_010612133" src="https://github.com/user-attachments/assets/306473a3-a6a8-4dc9-ac88-9ff35a96c133" />
+
+Task Analysis
+
+For the different audiences outlined above there are basically two targeted use cases:
+
+The guided users (students, researchers, people preparing a site job) are 
+* Analyzing the trends of one or more target areas or events to estimate long term impacts/solutions. Being able to determine the similarity/dissimilarity across event types (cleanup approach A vs cleanup approach B) and link that to the event outcomes (an increase in daily affected people vs a drop in daily affected people).
+  
+The unguided users (curious members of a community, students) are
+* Discovering these events and exploring through them for local events and outliers they may find interesting.
