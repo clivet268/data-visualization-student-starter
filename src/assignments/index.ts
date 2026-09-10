@@ -24,7 +24,7 @@ export const assignments: Assignment[] = [
     id: '3',
     name: 'Week 3',
     component: EnhanceTheDisplay,
-  }
+  },
 ];
 
 export const assignmentsMap = new Map(assignments.map((ex) => [ex.id, ex]));
