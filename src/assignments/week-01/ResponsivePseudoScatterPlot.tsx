@@ -126,7 +126,7 @@ export function ResponsivePseudoScatterPlot() {
   }, [dimensions]);
 
   return (
-    <div ref={divRef} className="relative w-full h-full rounded-lg shadow-sm relative">
+    <div ref={divRef} className="relative w-full h-full rounded-lg shadow-sm">
       <svg
         ref={svgRef}
         className="absolute inset-0 w-full h-full"
