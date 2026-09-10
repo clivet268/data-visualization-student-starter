@@ -195,7 +195,7 @@ function LoadCSV() {
     >
       <div
         style={{
-          width: '100%',
+          width: `${dimensions}`,
           height: '4vh',
           border: "1px solid #000268",
           textAlign: 'left', 
