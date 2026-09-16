@@ -31,3 +31,19 @@ The guided users (students, researchers, people preparing a site job) are
 The unguided users (curious members of a community, students) are
 
 - Discovering these events and exploring through them for local events and outliers they may find interesting.
+
+Validation 
+
+Domain level:
+     - Interview target guided users on usefullness, see reactions and extend of use by unguided users (anecdotal)
+
+Abstraction level:
+     - See that the most relevant metrics avg people care about are presented first in the quick look at an incident (the ideal unguided user walks away either satisfied or begins a guided path) (the ideal guided user is able to get all graphics filtered and neat for the main graphics and is able to access all available data in some form, fills their research needs or successfully links to where it can be found for things like statements) (anecdotal)
+
+Idiom level:
+     - See that the ideal user (both kinds) is engaged by and not overwhelmed by the multi panel and deep dive screen. See that the ideal user (both kinds) able to navigate the map and find event(s) they want. See that graphs are presented accurately and can handle all edge cases in provided dataset with almost no human review (in terms of data structure) (anecdotal, qualitative)
+
+Algorithms level: 
+     - Consider network impacts of sending entire global dataset, send only whats visible and measure how much data is sent
+     - Consider mem and render times, Largest Contentful Paint (LCP), Interaction to Next Paint (INP) are good metrics, too high is choppy but for large numbers of points there will need to be compromise (quantitative)
+
