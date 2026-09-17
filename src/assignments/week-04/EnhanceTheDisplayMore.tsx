@@ -58,10 +58,12 @@ function LoadCSV() {
   const handleScrollToElement = (id: string) => {
     const element = itemRefs.current.get(id);
     if (element) {
+      element.style.scrollMarginTop = '12px';
       element.scrollIntoView({
         behavior: 'smooth',
-        block: 'center',
+        block: 'start',
       });
+
     } else {
       console.warn(`Element with ID ${id} not found.`);
     }
@@ -349,7 +351,7 @@ function LoadCSV() {
                       cursor: 'pointer',
                       transform: 'translate(-50%, -50%)',
                     }}
-                    title={row.id}//ID is unique enough to be a key I believe
+                    title={"Mag: " + row.mag + " Lat/Long: " + row.latitude + "," + row.longitude + " ID: " + row.id}//ID is unique enough to be a key I believe
                     onClick={() => handleScrollToElement(row.id)}
                   ></button>
                 );
