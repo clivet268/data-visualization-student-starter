@@ -213,15 +213,17 @@ function LoadCSV() {
     return '#500220';
   };
   return (
-    <div ref={divRef} className="w-full rounded-lg shadow-sm relative overflow-y-hide">
+    <div  className="w-full rounded-lg shadow-sm relative overflow-y-hide mt-[4vh] self-start">
       <div
         style={{
-          width: `${dimensions}`,
+          position: 'fixed',
+          width: `100vw`,
           height: '4vh',
           border: '1px solid #000268',
           textAlign: 'left',
-          paddingTop: '10px',
+          paddingTop: '8px',
           paddingLeft: '10px',
+          top: '0px',
           display: 'flex',
           justifyContent: 'left',
           fontSize: '14px',
@@ -276,11 +278,12 @@ function LoadCSV() {
       <button
         onClick={() => setMapShow(!mapShow)}
         style={{
-          position: 'absolute',
+          position: 'fixed',
           top: '0px',
           right: '810px',
           zIndex: 11,
           padding: '0px 15px',
+          marginTop: '8px',
           backgroundColor: '#000268',
           color: 'white',
           border: 'none',
@@ -365,6 +368,7 @@ function LoadCSV() {
         style={{
           height: '96vh',
           width: '100%',
+          overflowY: 'auto',
         }}
       >
         <table
