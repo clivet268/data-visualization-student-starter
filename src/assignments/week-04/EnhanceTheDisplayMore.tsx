@@ -37,16 +37,16 @@ function LoadCSV() {
   const [minMag, setMinMag] = useState(4);
   const [maxMag, setMaxMag] = useState(10);
   const widths = [7.5, 6, 6, 2, 2, 2.5, 2, 2, 2, 2, 2, 4, 7.5, 12, 4, 4, 3, 3, 2, 3, 4, 4];
-  //TODO sorton needs propper types in input 
+  //TODO sorton needs propper types in input
   const [sorton, setsorton] = useState('');
   const [sortInverse, setsortInverse] = useState(false);
   const itemRefs = useRef<Map<string, HTMLTableRowElement | null>>(new Map());
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const selectedSortOn = event.currentTarget.textContent.replace(/[⇧⇩]/g, "");
+    const selectedSortOn = event.currentTarget.textContent.replace(/[⇧⇩]/g, '');
     console.log(selectedSortOn);
-    if(sorton === selectedSortOn){
-        setsortInverse(!sortInverse);
+    if (sorton === selectedSortOn) {
+      setsortInverse(!sortInverse);
     } else {
       setsorton(selectedSortOn);
       setsortInverse(false);
@@ -56,12 +56,16 @@ function LoadCSV() {
   const handleScrollToElement = (id: string) => {
     const element = itemRefs.current.get(id);
     if (element) {
-      element.style.scrollMarginTop = '12px';
+      // TODO make it like glow or something too
+      element.style.scrollMarginTop = '16px';
       element.scrollIntoView({
         behavior: 'smooth',
         block: 'start',
       });
-
+      //element.style.borderLeft = '2px solid #000268';
+      //element.style.borderBottom = '2px solid #000268';
+      //element.style.borderLeft = '1px solid #00026880';
+      //element.style.borderBottom = '1px solid #00026880';
     } else {
       console.warn(`Element with ID ${id} not found.`);
     }
@@ -211,7 +215,7 @@ function LoadCSV() {
     return '#500220';
   };
   return (
-    <div  className="w-full rounded-lg shadow-sm relative overflow-y-hide mt-[4vh] self-start">
+    <div className="w-full rounded-lg shadow-sm relative overflow-y-hide mt-[4vh] self-start">
       <div
         style={{
           position: 'fixed',
@@ -352,7 +356,16 @@ function LoadCSV() {
                       cursor: 'pointer',
                       transform: 'translate(-50%, -50%)',
                     }}
-                    title={"Mag: " + row.mag + " Lat/Long: " + row.latitude + "," + row.longitude + " ID: " + row.id}//ID is unique enough to be a key I believe
+                    title={
+                      'Mag: ' +
+                      row.mag +
+                      ' Lat/Long: ' +
+                      row.latitude +
+                      ',' +
+                      row.longitude +
+                      ' ID: ' +
+                      row.id
+                    } //ID is unique enough to be a key I believe
                     onClick={() => handleScrollToElement(row.id)}
                   ></button>
                 );
@@ -386,12 +399,19 @@ function LoadCSV() {
           <thead>
             <tr style={{ backgroundColor: '#f2f2f2', position: 'sticky', top: 0, zIndex: 1 }}>
               {headers.map((header, i) => (
-                <th key={i} style={{ padding: '0px', width: `${widths[i]}%`, backgroundColor: `${header === sorton ? '#fff011' : '#f2f2f2'}`}}>
+                <th
+                  key={i}
+                  style={{
+                    padding: '0px',
+                    width: `${widths[i]}%`,
+                    backgroundColor: `${header === sorton ? '#fff011' : '#f2f2f2'}`,
+                  }}
+                >
                   <button onClick={handleClick}>
                     {
-                    // set the header to the header unless we're sorting on it, then show sorting direction too
-                    header + (header === sorton ? (sortInverse ? '⇧' : '⇩') : '')
-                    //ternary operator + ternary operator = holy readability
+                      // set the header to the header unless we're sorting on it, then show sorting direction too
+                      header + (header === sorton ? (sortInverse ? '⇧' : '⇩') : '')
+                      //ternary operator + ternary operator = holy readability
                     }
                   </button>
                 </th>
@@ -404,7 +424,7 @@ function LoadCSV() {
               .sort((a, b) => {
                 const valueA = a[sorton as keyof SeismicEvent];
                 const valueB = b[sorton as keyof SeismicEvent];
-                console.log(sortInverse)
+                console.log(sortInverse);
                 // sortInverse just inverts sort order and these two ifs account for diff types
                 //  will add more to account for time and any other special cases
                 if (typeof valueA === 'number' && typeof valueB === 'number') {
@@ -418,10 +438,10 @@ function LoadCSV() {
                 return 0;
               })
               .map((row, rowIndex) => (
-                <tr 
+                <tr
                   key={rowIndex}
                   ref={(el) => {
-                    // Deletion not strictly needed here but it handles a case, 
+                    // Deletion not strictly needed here but it handles a case,
                     //  will never normally be executed and may be useful in the future
                     //  so is here for my reference
                     if (el) {
@@ -431,7 +451,8 @@ function LoadCSV() {
                       // Dosent exist remove from map
                       itemRefs.current.delete(row.id);
                     }
-                  }}>
+                  }}
+                >
                   {headers.map((header, colIndex) => (
                     <td
                       key={colIndex}

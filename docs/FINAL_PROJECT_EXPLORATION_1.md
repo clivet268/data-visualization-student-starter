@@ -32,7 +32,7 @@ The unguided users (curious members of a community, students) are
 
 - Discovering these events and exploring through them for local events and outliers they may find interesting.
 
-Validation 
+Validation
 
 Domain level:
 
@@ -46,8 +46,7 @@ Idiom level:
 
 - See that the ideal user (both kinds) is engaged by and not overwhelmed by the multi panel and deep dive screen. See that the ideal user (both kinds) able to navigate the map and find event(s) they want. See that graphs are presented accurately and can handle all edge cases in provided dataset with almost no human review (in terms of data structure) (anecdotal, qualitative)
 
-Algorithms level: 
+Algorithms level:
 
 - Consider network impacts of sending entire global dataset, send only whats visible and measure how much data is sent
 - Consider mem and render times, Largest Contentful Paint (LCP), Interaction to Next Paint (INP) are good metrics, too high is choppy but for large numbers of points there will need to be compromise (quantitative)
-

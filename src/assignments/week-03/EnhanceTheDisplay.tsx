@@ -39,7 +39,7 @@ function LoadCSV() {
   const [minMag, setMinMag] = useState(6);
   const [maxMag, setMaxMag] = useState(10);
   const widths = [7.5, 6, 6, 2, 2, 2.5, 2, 2, 2, 2, 2, 4, 7.5, 12, 4, 4, 3, 3, 2, 3, 4, 4];
-  //TODO sorton needs propper types in input 
+  //TODO sorton needs propper types in input
   const [sorton, setsorton] = useState('');
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
