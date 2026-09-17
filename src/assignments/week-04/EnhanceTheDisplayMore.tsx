@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from 'react';
-import { useDimensions } from './useDimensions';
 // TODO learn more tailwind
 interface SeismicEvent {
   time: string;
@@ -34,7 +33,6 @@ function LoadCSV() {
   const [data, setData] = useState<SeismicEvent[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const { ref: divRef, dimensions } = useDimensions();
   const [mapShow, setMapShow] = useState(false);
   const [minMag, setMinMag] = useState(4);
   const [maxMag, setMaxMag] = useState(10);
