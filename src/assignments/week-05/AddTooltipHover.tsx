@@ -27,6 +27,11 @@ interface SeismicEvent {
   pixelY: number;
 }
 
+interface Coordinate {
+  x: number;
+  y: number;
+}
+
 const baseUrl = import.meta.env.BASE_URL;
 
 function LoadCSV() {
@@ -34,17 +39,19 @@ function LoadCSV() {
   const [headers, setHeaders] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [mapShow, setMapShow] = useState(false);
+  const [plotShow, setplotShow] = useState(false);
   const [minMag, setMinMag] = useState(4);
   const [maxMag, setMaxMag] = useState(10);
   const widths = [7.5, 6, 6, 2, 2, 2.5, 2, 2, 2, 2, 2, 4, 7.5, 12, 4, 4, 3, 3, 2, 3, 4, 4];
   //TODO sorton needs propper types in input
   const [sorton, setsorton] = useState('');
   const [sortInverse, setsortInverse] = useState(false);
+  const [hoverPos, setHoverPos] = useState<SeismicEvent | null>(null);
   const itemRefs = useRef<Map<string, HTMLTableRowElement | null>>(new Map());
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     const selectedSortOn = event.currentTarget.textContent.replace(/[⇧⇩]/g, '');
-    console.log(selectedSortOn);
+    //console.log(selectedSortOn);
     if (sorton === selectedSortOn) {
       setsortInverse(!sortInverse);
     } else {
@@ -72,7 +79,7 @@ function LoadCSV() {
   };
 
   useEffect(() => {
-    console.log(baseUrl);
+    //console.log(baseUrl);
     fetch(`${baseUrl}data/All_Earthquakes_all_month.csv`)
       .then((res) => res.text())
       .then((csvText) => {
@@ -87,13 +94,13 @@ function LoadCSV() {
         const trimmedHeaders: string[] = [];
         for (const orig of columnHeaders) {
           if (orig != ',' && orig != '') {
-            console.log(orig);
+            //console.log(orig);
             trimmedHeaders.push(orig);
           }
         }
-        console.log(columnHeaders);
+        //console.log(columnHeaders);
         setHeaders(trimmedHeaders);
-        console.log(trimmedHeaders);
+        //console.log(trimmedHeaders);
 
         const entries = rows.slice(1).map((row) => {
           const values: string[] = [];
@@ -139,7 +146,7 @@ function LoadCSV() {
 
           // Normalize and scale to 800px
           const yPixelscaled = ((mercatorY - minMercatorY) / (maxMercatorY - minMercatorY)) * 800;
-          console.log(values[5]);
+          //console.log(values[5]);
           const entry: SeismicEvent = {
             time: values[0],
             latitude: +values[1],
@@ -298,6 +305,27 @@ function LoadCSV() {
       >
         {mapShow ? '✕' : '🌏︎'}
       </button>
+      <button
+        onClick={() => setplotShow(!plotShow)}
+        style={{
+          position: 'fixed',
+          top: '0px',
+          left: '830px',
+          zIndex: 11,
+          padding: '0px 15px',
+          marginTop: '8px',
+          backgroundColor: '#000268',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+          transition: 'transform 0.25s ease-in-out',
+          transform: plotShow ? 'translateX(100%)' : 'translateX(0px)',
+        }}
+      >
+        {plotShow ? '✕' : '📊'}
+      </button>
       <div
         style={{
           position: 'fixed',
@@ -314,6 +342,218 @@ function LoadCSV() {
           zIndex: 10,
         }}
       >
+        <div
+          style={{
+            zIndex: 200,
+            borderTop: '4px solid #222222',
+            borderBottom: '4px solid #666666',
+            borderLeft: '4px solid #222222',
+            borderRight: '4px solid #666666',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.8)',
+            position: 'absolute',
+            //bottom: `${hoverPos.y}px`,
+            //left: `calc(100% - 800px + ${hoverPos.x}px)`,
+            //position: 'absolute',
+            left: hoverPos == null ? '0px' : `calc(${hoverPos.pixelX}px + 1px)`,
+            bottom: hoverPos == null ? '0px' : `calc(${hoverPos.pixelY}px + 5px)`,
+            //background: '#faded1',
+            //background: '#54aded',
+            background: '#368cad',
+            width: 'auto',
+            height: 'auto',
+            fontSize: '14px',
+            padding: '4px',
+            display: hoverPos == null ? 'none' : 'block',
+          }}
+          onMouseEnter={() => setHoverPos(hoverPos)}
+          onMouseLeave={() => setHoverPos(null)}
+        >
+          <div
+            style={{
+              borderBottom: '1px solid black',
+              margin: '1px',
+            }}
+          >
+            {hoverPos?.type} : {hoverPos?.id}
+          </div>
+          <div>
+            {hoverPos == null
+              ? 'NULL data point'
+              : 'Occured on ' +
+                new Date(hoverPos.time).toLocaleDateString('en-US', { month: 'short' }) +
+                ' ' +
+                (new Date(hoverPos.time).getUTCDate() + 1) +
+                ', ' +
+                new Date(hoverPos.time).getFullYear()}
+          </div>
+          <div
+            style={{
+              borderBottom: '1px solid black',
+              margin: '1px',
+            }}
+          >
+            {hoverPos == null
+              ? 'NULL data point'
+              : new Date(hoverPos.time).getHours().toString().padStart(2, '0') +
+                ':' +
+                new Date(hoverPos.time).getMinutes().toString().padStart(2, '0') +
+                ':' +
+                new Date(hoverPos.time).getSeconds().toString().padStart(2, '0') +
+                ':' +
+                new Date(hoverPos.time).getMilliseconds().toString().padStart(4, '0') +
+                ' UTC'}
+          </div>
+          <div
+            //TODO just realized i use +/- for lat long but the graph has degree NS EW notation >:(
+            style={{
+              borderBottom: '1px solid black',
+              margin: '1px',
+            }}
+          >
+            {hoverPos?.latitude}/{hoverPos?.longitude}
+          </div>
+
+          {/* shhhh later
+          <div
+            style={{
+              width: '150px',
+              height: '150px',
+              borderRadius: '50%',
+              background: 'conic-gradient(#3498db 0deg 60deg, #ecf0f1 60deg 360deg)',
+            }}
+          >
+            f
+          </div>*/}
+          <div
+            style={{
+              fontSize: '10px',
+            }}
+          >
+            Mag (circle): radius 0-9<br></br>
+            Depth (white): 0-667km<br></br>
+            Horizontal error (reduces): +/-56km
+          </div>
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              minWidth: '120px',
+              minHeight: '120px',
+              position: 'relative',
+              display: 'flex',
+              justifyContent: 'center',
+              fontSize: '10px',
+            }}
+          >
+            <div
+              style={{
+                alignItems: 'center',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  height: '100px',
+                  width: '100px',
+                  borderRadius: '50%',
+                  background:
+                    'repeating-radial-gradient(circle, #00000090 0px, #00000090 2px, transparent 2px, transparent 24px, #00000090 25px, #00000090 27px, transparent 2px, transparent 48px)',
+
+                  //boxShadow: `
+                  //0 0 0 2px #000000,  /* 2px thin ring */
+                  //0 0 0 20px #368cad,
+                  //0 0 0 22px #000000, /* 2px thin ring */
+                  //0 0 0 40px #368cad,
+                  //0 0 0 42px #000000  /* 2px thin ring */
+                  //`
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: 0,
+                    width: '100px',
+                    height: '2px',
+                    marginTop: '-1px' /* Pulls it up exactly 1px to split the center line */,
+                    backgroundColor: 'black' /* Change color as needed */,
+                    pointerEvents: 'none' /* Prevents it from blocking mouse hovers */,
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    bottom: 0,
+                    left: '50%',
+                    width: '2px',
+                    marginLeft: '-1px',
+                    backgroundColor: 'black',
+                  }}
+                />
+
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    bottom: 0,
+                    left: '50%',
+                    width: '2px',
+                    marginLeft: '-1px',
+                    backgroundColor: '#fff',
+                    zIndex: '100',
+                    height: hoverPos == null ? '0px' : `${(hoverPos.depth / 667) * 50}px`,
+                  }}
+                />
+
+                <div
+                  style={{
+                    position: 'absolute',
+                    left:
+                      hoverPos == null ? '0px' : `${50 - (hoverPos.horizontalError / 56) * 50}px`,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '2px',
+                    height: '10px',
+                    backgroundColor: '#ff0000',
+                    zIndex: 10,
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    right:
+                      hoverPos == null ? '0px' : `${50 - (hoverPos.horizontalError / 56) * 50}px`,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '2px',
+                    height: '10px',
+                    backgroundColor: '#ff0000',
+                    zIndex: 10,
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  //height: hoverPos == null ? '0px' : `${(hoverPos.magError / 0.35) * 100}px`,
+                  //width: hoverPos == null ? '0px' : `${(hoverPos.magError / 0.35) * 100}px`,
+                  height: hoverPos == null ? '0px' : `${(hoverPos.mag / 9) * 100}px`,
+                  width: hoverPos == null ? '0px' : `${(hoverPos.mag / 9) * 100}px`,
+                  borderRadius: '50%',
+                  background:
+                    hoverPos == null ? '#000 ' : backgrundColorSeverity(hoverPos.mag) + '90',
+                }}
+              />
+            </div>
+          </div>
+        </div>
         <img
           src={`${baseUrl}data/Mercator_projection_Square_axislabled.png`}
           alt="800x800 Square Mercator Map"
@@ -357,7 +597,7 @@ function LoadCSV() {
                       transform: 'translate(-50%, -50%)',
                     }}
                     //needs to persist on click
-                    title={
+                    /*title={
                       'Mag: ' +
                       row.mag +
                       ' Lat/Long: ' +
@@ -366,8 +606,10 @@ function LoadCSV() {
                       row.longitude +
                       ' ID: ' +
                       row.id
-                    } //ID is unique enough to be a key I believe
+                    } */ //ID is unique enough to be a key I believe
                     onClick={() => handleScrollToElement(row.id)}
+                    onMouseEnter={() => setHoverPos(row)}
+                    onMouseLeave={() => setHoverPos(null)}
                   ></button>
                 );
               })
@@ -425,7 +667,7 @@ function LoadCSV() {
               .sort((a, b) => {
                 const valueA = a[sorton as keyof SeismicEvent];
                 const valueB = b[sorton as keyof SeismicEvent];
-                console.log(sortInverse);
+                //console.log(sortInverse);
                 // sortInverse just inverts sort order and these two ifs account for diff types
                 //  will add more to account for time and any other special cases
                 if (typeof valueA === 'number' && typeof valueB === 'number') {
@@ -477,7 +719,7 @@ function LoadCSV() {
   );
 }
 
-export function EnhanceTheDisplayMore() {
+export function AddTooltipHover() {
   //TODO too much div
   return (
     <div>
