@@ -27,10 +27,6 @@ interface SeismicEvent {
   pixelY: number;
 }
 
-interface Coordinate {
-  x: number;
-  y: number;
-}
 
 const baseUrl = import.meta.env.BASE_URL;
 
