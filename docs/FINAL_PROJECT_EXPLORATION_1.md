@@ -50,3 +50,13 @@ Algorithms level:
 
 - Consider network impacts of sending entire global dataset, send only whats visible and measure how much data is sent
 - Consider mem and render times, Largest Contentful Paint (LCP), Interaction to Next Paint (INP) are good metrics, too high is choppy but for large numbers of points there will need to be compromise (quantitative)
+
+# Updated Sketch
+
+<img width="1261" height="831" alt="sketch2" src="https://github.com/user-attachments/assets/10688399-d06a-4d22-a759-b7f3b4904d02" />
+
+I came across https://www.earthscope.org/app/ieb/index.html and it gave me some inspiration for what a more simplistic, if chunkier, implementation could look like compared to something like google maps, which while nice would be a bit more complex. None of the earthquake stuff is relevant but the mapping system is simple, simple +/- buttons but scrolling wouldnt be too hard to add and would make sense for my website since the map is the main part of the simple page. I would make it contextual, scroll on map = zoom scroll on news feed = scroll. The website uses google maps api but i could try https://openfreemap.org/quick_start/ and https://leafletjs.com/ which uses OpenStreetMaps which I have a little experience with.
+
+Beyond this design step the additions to this drawing are the affected area styles and markers (easier to do digitally now) the scale of stuff, since I did it on screen and the lessons learned from the other class assignment: more filters, minimize whats going on *that they don't care about*. Struggling with clutter is annoying and so the balance between content rich and ease of use is to let them filter and filter. This should apply with good defaults on the main page and a moderate amount of filters and then have a high amount of filters on the detailed page.
+
+There are now some tooltips included on the graphs as well, if things are connected by date, as shown by dates appearing across multiple screens, so some tooltips can be auto created on the graphs and sources from the event feed.
