@@ -59,7 +59,7 @@ export function SiteSummary({ selectedSite }: SiteInfo) {
     }
   });
 
-  const hazards = p.ARSENIC;
+  //const hazards = p.ARSENIC;
 
   return (
     <div className={`${styles.siteSummary} ${styles.spilloverlay}`}>
