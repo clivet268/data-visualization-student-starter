@@ -20,7 +20,7 @@ export function TitleBar() {
         ? prevSelected.filter((item) => item !== id)
         : [...prevSelected, id];
 
-      onChange(updated);
+      //onChange(updated);
       return updated;
     });
   };
@@ -28,7 +28,7 @@ export function TitleBar() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        //setIsOpen(false);
       }
     };
 

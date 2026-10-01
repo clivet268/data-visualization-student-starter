@@ -1,6 +1,6 @@
 import { MapBase } from './mapbase';
 import { Spilloverlay } from './Spilloverlay';
-import { useEffect, useState, useRef } from 'react';
+import { useState } from 'react';
 import type { Feature, Geometry } from 'geojson';
 
 export function Spillover() {
