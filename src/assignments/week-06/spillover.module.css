@@ -1,0 +1,209 @@
+:root {
+  /*https://coolors.co/bee9e8-62b6cb-1b4965-cae9ff-5fa8d3*/
+  /*^^^ ive found it very handy -268*/
+  --frozen-water: #bee9e8ff;
+  --pacific-blue: #62b6cbff;
+  --yale-blue: #1b4965ff;
+  --pale-sky: #cae9ffff;
+  --fresh-sky: #5fa8d3ff;
+  --steel-blue: #7399b2ff;
+  --jet-black: #0c2331ff;
+  --blue-bell: #3698d9ff;
+}
+
+.spilloverlay {
+  pointer-events: auto;
+}
+
+.titleBar {
+  display: grid;
+  grid-template-columns: 200px 1fr 20%;
+  background: var(--jet-black);
+  width: 100%;
+  height: 10%;
+  position: absolute;
+}
+
+.title {
+  justify-content: center;
+  justify-content: center;
+  align-items: center;
+  font-size: 40px;
+  color: var(--frozen-water);
+  margin: 10px;
+  margin-left: 30px;
+}
+
+.newsFeed a {
+  border-top: 5px solid var(--fresh-sky);
+  margin: 15px;
+  /*padding: 15px;*/
+}
+
+.newsFeed {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  background: var(--frozen-water);
+  width: 20%;
+  height: 40%;
+  top: 10%;
+  position: absolute;
+  padding: 10px;
+  padding-top: 20px;
+  overflow-y: auto;
+}
+
+.newsFeedList {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+}
+
+.siteSummary {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  background: var(--frozen-water);
+  left: 75%;
+  width: 25%;
+  height: 60%;
+  top: 10%;
+  position: absolute;
+  padding: 10px;
+  padding-top: 20px;
+  overflow-y: auto;
+}
+
+.containerBase {
+  border-radius: 25px;
+  width: 1000px;
+  height: 800px;
+  display: grid;
+  background: var(--pale-sky);
+  padding: 10px;
+  grid-template-columns: 2fr 1fr 1fr;
+  color: var(--yale-blue);
+  /*color: #fff;*/
+}
+
+.base {
+  border-radius: 25px;
+  background: var(--frozen-water);
+}
+
+.objBox {
+  text-align: center;
+  padding: 5px;
+  margin-top: 1px;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.activity {
+  /*background: #456500;*/
+  background: var(--steel-blue);
+  border-radius: 10px;
+}
+
+.reporter {
+  background: var(--steel-blue);
+  border-radius: 10px;
+}
+
+/*.reporter-check {
+    width: 80%;
+    background: #b0b0b0;
+    margin-top: 10px;
+}
+    */
+
+.activityAssigned {
+  background: var(--blue-bell);
+}
+
+.reporterAssigned {
+  background: var(--blue-bell);
+}
+
+.assign {
+}
+
+.add-activity {
+}
+
+.add-reporter {
+}
+
+.assignedTable {
+  box-sizing: border-box;
+  background: var(--pacific-blue);
+  padding: 10px;
+  padding-top: 20px;
+  text-align: center;
+  overflow-y: auto;
+}
+.assignedTable th {
+  background: var(--jet-black);
+  color: #fff;
+}
+
+.assignedTable table {
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--fresh-sky);
+  padding: 10px;
+  text-align: center;
+}
+
+.unassignedTable {
+  border-radius: 10px;
+  box-sizing: border-box;
+  background: var(--fresh-sky);
+  padding: 10px;
+  text-align: center;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.unassignedTable table {
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  /*background: #faded0;*/
+  background: var(--fresh-sky);
+  padding: 10px;
+  text-align: center;
+}
+
+.controlBar {
+  border-radius: 10px;
+  display: grid;
+  background: var(--steel-blue);
+  /*padding: 10px;*/
+  gap: 10px;
+  grid-template-rows: 2fr 1fr 1fr 1fr 1fr 1fr 2fr 1fr 1fr;
+  place-items: center;
+}
+
+.controlBar button {
+  background: var(--steel-blue);
+  width: 90%;
+}
+.controlBar input {
+  background: var(--steel-blue);
+  width: 90%;
+}
+
+.tableHead {
+  box-sizing: border-box;
+  position: sticky;
+  z-index: 1;
+  top: -10px;
+  background: #7fd10c;
+  padding: 10px;
+}
+.controlPanel {
+  margin: -10px;
+}
