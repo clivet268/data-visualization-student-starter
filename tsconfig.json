@@ -1,4 +1,12 @@
 {
   "files": [],
-  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+
+  "compilerOptions": {
+
+    "allowJs": true,           // Allows JavaScript files (.js and .jsx) to be imported
+    "jsx": "react-jsx",        // Enables the modern JSX transform (use "preserve" if bundling via Vite/Webpack)
+    "moduleResolution": "node" // Ensures standard node-based import paths work correctly
+  },
+  "include": ["src"]           // Ensure your source folders are included
 }
