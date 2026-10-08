@@ -5,7 +5,7 @@ import { EnhanceTheDisplay } from './week-03/EnhanceTheDisplay';
 import { EnhanceTheDisplayMore } from './week-04/EnhanceTheDisplayMore';
 import { AddTooltipHover } from './week-05/AddTooltipHover';
 import { Spillover } from './week-06/Spillover';
-import { GlobeView } from './week-07/GlobeView.jsx'
+import GlobeView from './week-07/GlobeView.jsx'
 
 export interface Assignment {
   id: string;

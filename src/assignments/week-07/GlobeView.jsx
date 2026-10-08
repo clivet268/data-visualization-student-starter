@@ -1433,7 +1433,7 @@ export default function GlobeView() {
           }}
         >
           <div style={{ fontSize: 14, fontWeight: 700 }}>{tip.name}</div>
-          <div style={{ margin: '6px 0 4px', opacity: 0.65 }}>Top contributors:</div>
+          <div style={{ margin: '6px 0 4px', opacity: 0.65 }}>Highest in Metric:</div>
           {tip.top.map((t, i) => (
             <div
               key={i}
