@@ -4,8 +4,9 @@ import { LoadAndDisplayTheDataset } from './week-02/LoadAndDisplayTheDataset';
 import { EnhanceTheDisplay } from './week-03/EnhanceTheDisplay';
 import { EnhanceTheDisplayMore } from './week-04/EnhanceTheDisplayMore';
 import { AddTooltipHover } from './week-05/AddTooltipHover';
-import { Spillover } from './week-06/Spillover';
+import { Spillover as SpilloverOld } from './week-06/Spillover';
 import GlobeView from './week-07/GlobeView.jsx'
+import { Spillover } from './week-08/Spillover';
 
 export interface Assignment {
   id: string;
@@ -42,12 +43,17 @@ export const assignments: Assignment[] = [
   {
     id: '6',
     name: 'Week 6',
-    component: Spillover,
+    component: SpilloverOld,
   },
   {
     id: '7',
     name: 'Week 7',
     component: GlobeView,
+  },
+  {
+    id: '8',
+    name: 'Week 8',
+    component: Spillover,
   },
 ];
 
