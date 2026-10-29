@@ -2,7 +2,7 @@ import styles from './spillover.module.css';
 import type { Feature, Geometry } from 'geojson';
 import { useEffect, useState } from 'react';
 import { SiteData } from './Polygons';
-
+import { SlidePanel } from './SlidePanel';
 interface SiteInfo {
   selectedSite: SiteData | null;
   conLoading: boolean;
@@ -23,8 +23,17 @@ const updateMap = (key: string, value: string) => {
 
 export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {
   if (!selectedSite) {
-    return <div> SELECTED SITE NOT FOUND!!!! </div>;
-  }
+  return (
+    <SlidePanel side="right" placement={styles.siteSummary}>
+      <div className={styles.boxTitle}>&nbsp;</div>
+      <div className={styles.boxScroll}>
+        <div className={styles.contentbox}>
+          <div className={styles.contentboxvalue}>No site content, please select a site</div>
+        </div>
+      </div>
+    </SlidePanel>
+  );
+}
   const p = selectedSite.siteProperties;
   console.log(p);
   const epaId: string = p.EPA_ID;
@@ -39,9 +48,7 @@ export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {
     typeof p.GIS_AREA === 'number' ? `${p.GIS_AREA.toFixed(1)} ${p.GIS_AREA_U ?? ''}` : null;
 
   return (
-    <div
-      className={`${styles.panel} ${styles.siteSummary} ${styles.spilloverlay} ${styles.nicebox}`}
-    >
+<SlidePanel side="right" placement={styles.siteSummary}>
       <div className={styles.boxTitle}>
         {p.SITE_NAME}
         <span className={styles.boxSubtitle}>{p.EPA_PROGRA}</span>
@@ -103,15 +110,15 @@ export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {
               <div className={styles.muted}>No contaminants listed.</div>
             )}
             {siteContaminantList && siteContaminantList.length > 0 && (
-  <ul className={styles.contentlist}>
-    {selectedSite.getContaminants().map((c) => (
-      <li key={c.name} className={styles.contentlistitem}>
-        <strong>{c.name}</strong>
-        {c.media.length > 0 && ` (${c.media.join(', ')})`}
-      </li>
-    ))}
-  </ul>
-)}
+              <ul className={styles.contentlist}>
+                {selectedSite.getContaminants().map((c) => (
+                  <li key={c.name} className={styles.contentlistitem}>
+                    <strong>{c.name}</strong>
+                    {c.media.length > 0 && ` (${c.media.join(', ')})`}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -124,8 +131,8 @@ export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </div>    
+</SlidePanel>
   );
 }
 

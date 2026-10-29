@@ -10,6 +10,33 @@
   --jet-black: #0c2331ff;
   --blue-bell: #3698d9ff;
   --windowborder: 3px;
+  /* tabs: slightly darker than the title-button blues */
+  --tab-bg: #163c53ff;
+  --tab-bg-hover: #1f5272ff;
+  --tab-bg-active: #2e82baff;
+
+  /* zoom buttons (transparent background, so foreground only) */
+  --zoom-fg: var(--yale-blue);
+  --zoom-fg-hover: var(--blue-bell);
+
+  /* collapse tabs on the side panels */
+  --slide-toggle-bg: var(--yale-blue);
+  --slide-toggle-fg: var(--pale-sky);
+  --slide-toggle-border: var(--fresh-sky);
+  --slide-toggle-bg-hover: var(--blue-bell);
+
+  /* charts */
+  --chart-slice-stroke: #ffffffff;
+
+  /* reused constants */
+  --slide-duration: 0.3s;
+  --fade-duration: 0.25s;
+  --ui-ghost-opacity: 0.5;
+  --group-btn-hover: #ffffff26;
+  --pin-bg: #ff5a36ff;
+  --pin-border: #ffffffff;
+  --pin-shadow: #0c233199;
+  --pin-region: #ff5a36ff;
 }
 
 .spilloverlay {
@@ -333,7 +360,7 @@
 .statsPanel {
   left: 0;
   bottom: 0;
-  width: 60%;
+  width: 30%;
   height: 50%;
 }
 
@@ -413,4 +440,236 @@
 .tabBar .titleButton {
   font-size: 0.9rem;
   padding: 4px 14px;
+}
+
+.tabBar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+/* ---------- tabs and zoom ---------- */
+.tabBar .titleButton {
+  font-size: 0.9rem;
+  padding: 4px 14px;
+  background-color: var(--tab-bg);
+}
+.tabBar .titleButton:hover {
+  background-color: var(--tab-bg-hover);
+}
+.tabBar .titleButton.titleButtonActive {
+  background-color: var(--tab-bg-active);
+}
+
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.zoomButton {
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 8px;
+  color: var(--zoom-fg);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.zoomButton:hover:not(:disabled) {
+  color: var(--zoom-fg-hover);
+}
+.zoomButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.zoomLevel {
+  min-width: 2.2em;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--zoom-fg);
+}
+
+/* ---------- chart area fills the panel; it only scrolls when zoomed ---------- */
+.boxFill {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.contentbox.contentboxfill {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: 0;
+}
+.contentboxfill .contentboxname {
+  flex: 0 0 auto;
+}
+.chartViewport {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.chartViewport svg {
+  display: block;
+}
+.chartViewport .muted {
+  padding: 6px 10px;
+}
+
+/* ---------- collapsible side panels ---------- */
+/* invisible full-screen layer: holds only the arrow; the panel keeps its own placement class */
+.slideWrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity var(--fade-duration) ease, visibility 0s;
+}
+.slideWrap > .panel {
+  transition: transform var(--slide-duration) ease, visibility 0s;
+}
+
+.slideToggle { transition: left var(--slide-duration) ease; }
+.slideLeft .slideToggle { border-radius: 0 10px 10px 0; }
+.slideRight .slideToggle { border-radius: 10px 0 0 10px; }
+.slideLeft.slideCollapsed > .panel,
+.slideRight.slideCollapsed > .panel {
+  visibility: hidden; /* hidden only after the slide finishes */
+  transition:
+    transform var(--slide-duration) ease,
+    visibility 0s linear var(--slide-duration);
+}
+.slideLeft.slideCollapsed > .panel {
+  transform: translateX(-100%);
+}
+.slideRight.slideCollapsed > .panel {
+  transform: translateX(100%);
+}
+
+.slideToggle {
+  position: absolute;
+  top: 8px;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--slide-toggle-fg);
+  background: var(--slide-toggle-bg);
+  border: 2px solid var(--slide-toggle-border);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    left var(--slide-duration) ease,
+    right var(--slide-duration) ease;
+}
+.slideToggle:hover {
+  background: var(--slide-toggle-bg-hover);
+}
+
+
+/* ---------- hide all UI (toggle stays, at 50%) ---------- */
+.titleBar {
+  transition:
+    background-color var(--fade-duration) ease,
+    border-color var(--fade-duration) ease;
+}
+.uiHidden .slideWrap {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--fade-duration) ease,
+    visibility 0s linear var(--fade-duration);
+}
+.uiHidden .titleBar {
+  background: transparent;
+  border-color: transparent;
+  pointer-events: none;
+}
+.uiHidden .title,
+.uiHidden .titleControls > :not(.hideToggle) {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--fade-duration) ease,
+    visibility 0s linear var(--fade-duration);
+}
+.hideToggle {
+  transition: opacity var(--fade-duration) ease;
+}
+.uiHidden .hideToggle {
+  opacity: var(--ui-ghost-opacity);
+  pointer-events: auto;
+}
+
+/* .contentbox turned sideways: |title| label: value  label: value */
+.contentbox.contentboxhorizontal {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  flex: 1 1 auto;
+  margin-bottom: 0;
+}
+.contentboxhorizontal .contentboxname {
+  width: auto;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.contentboxhorizontal .contentboxvalue {
+  width: auto;
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 16px;
+}
+.contentinline {
+  white-space: nowrap;
+}
+
+/* wavy container holding real buttons */
+.titleGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background-color: var(--yale-blue);
+  border-bottom: 3px solid var(--fresh-sky);
+  border-radius: 20px 0 20px 0;
+}
+.groupButton {
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 3px 14px;
+  color: var(--pale-sky);
+  background: none;
+  border: none;
+  border-radius: 12px 0 12px 0;
+  cursor: pointer;
+}
+.groupButton:hover:not(:disabled) { background-color: var(--group-btn-hover); }
+.groupButton:disabled { opacity: 0.45; cursor: not-allowed; }
+.groupButtonActive,
+.groupButtonActive:hover:not(:disabled) { background-color: var(--tab-bg-active); }
+
+/* draggable pin (Leaflet divIcon) */
+.pin {
+  box-sizing: border-box;
+  background: var(--pin-bg);
+  border: 3px solid var(--pin-border);
+  border-radius: 50%;
+  box-shadow: 0 0 4px var(--pin-shadow);
+  cursor: grab;
 }

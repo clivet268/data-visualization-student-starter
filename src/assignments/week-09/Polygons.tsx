@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { GeoJSON } from 'react-leaflet';
 import type { FeatureCollection, Feature, Geometry } from 'geojson';
 import type { PathOptions } from 'leaflet';
+
+import type { FocusRequest } from './mapbase';
+import { siteMatchesFilters, type TimeKey } from './filters';
+import { fullyEnclosed, type Pin } from './geo';
 interface SiteProperties {
   FID: number;
   REGION_COD: number;
@@ -95,17 +99,17 @@ export class SiteData {
   }
 
   // one entry per contaminant name, with every medium it appears in
-getContaminants(): Contaminant[] {
-  const byName = new Map<string, Set<string>>();
-  for (const c of this.siteContaminantList ?? []) {
-    const name = c.preferred_contaminant_name;
-    if (!name) continue;
-    const media = byName.get(name) ?? new Set<string>();
-    if (c.media_name) media.add(c.media_name);
-    byName.set(name, media);
+  getContaminants(): Contaminant[] {
+    const byName = new Map<string, Set<string>>();
+    for (const c of this.siteContaminantList ?? []) {
+      const name = c.preferred_contaminant_name;
+      if (!name) continue;
+      const media = byName.get(name) ?? new Set<string>();
+      if (c.media_name) media.add(c.media_name);
+      byName.set(name, media);
+    }
+    return [...byName].map(([name, media]) => ({ name, media: [...media] }));
   }
-  return [...byName].map(([name, media]) => ({ name, media: [...media] }));
-}
 }
 
 interface MapInteractivity {
@@ -114,6 +118,13 @@ interface MapInteractivity {
   compareMode: boolean;
   selectedSites: Map<string, SiteData>;
   toggleSelectedSite: (site: SiteData) => void;
+  currentSelectedSite: SiteData | null;
+  focusRequest: FocusRequest | null;
+  statusFilter: Set<string>;
+  timeFilter: TimeKey;
+  pins: Pin[];
+  pinsActive: boolean;
+  onPinSelection: (enclosed: SiteData[]) => void;
 }
 const baseUrl = import.meta.env.BASE_URL;
 
@@ -126,7 +137,12 @@ const SELECTED_STYLE: PathOptions = {
   fillOpacity: 0.6,
   weight: 3,
 };
-
+// Leaflet setStyle merges, so every visible style must put opacity back to 1
+const HIDDEN_STYLE: PathOptions = { opacity: 0, fillOpacity: 0 };
+const show = (s: PathOptions): PathOptions => ({ ...s, opacity: 1 });
+const FLASH_MS = 600;
+const FLASH_TOGGLES = 6; // 3 slow flashes
+const loading = new Set<string>(); // EPA ids with a request in flight
 const siteDataCache: Map<string, SiteData> = new Map();
 // number of EPA requests currently in flight; conLoading is true while this is > 0
 let inFlight = 0;
@@ -150,10 +166,10 @@ async function fetchEpaSummary(epaId: string, signal: AbortSignal): Promise<Site
     throw new Error('EPA ID not found in dataset');
   }
 
- // cache hit: contaminants already loaded (an empty array still counts as loaded)
-if (s.siteContaminantList !== undefined) {
-  return s;
-}
+  // cache hit: contaminants already loaded (an empty array still counts as loaded)
+  if (s.siteContaminantList !== undefined) {
+    return s;
+  }
 
   const url =
     `https://data.epa.gov/dmapservice/sems.envirofacts_site/sems.envirofacts_site.epa_id/equals/` +
@@ -164,52 +180,116 @@ if (s.siteContaminantList !== undefined) {
 
   const jsons: SiteContaminants[] = (await res.json()) ?? [];
 
-// a loaded-but-empty result is valid; the left join also yields all-null rows, drop those
-s.siteContaminantList = jsons.filter((c) => c.preferred_contaminant_name);
-siteDataCache.set(epaId, s);
-return s.siteContaminantList.length === 0 ? null : s;
+  // a loaded-but-empty result is valid; the left join also yields all-null rows, drop those
+  s.siteContaminantList = jsons.filter((c) => c.preferred_contaminant_name);
+  siteDataCache.set(epaId, s);
+  return s.siteContaminantList.length === 0 ? null : s;
 }
 
 export function Polygons({
-  setcurrentSelectedSite,
-  setconLoading,
-  compareMode,
-  selectedSites,
-  toggleSelectedSite,
+  setcurrentSelectedSite, setconLoading, compareMode, selectedSites, toggleSelectedSite, currentSelectedSite,
+  focusRequest, statusFilter, timeFilter, pins, pinsActive, onPinSelection,
 }: MapInteractivity) {
   const [geoData, setGeoData] = useState<FeatureCollection | null>(null);
+  const [flash, setFlash] = useState<{ ids: Set<string>; on: boolean } | null>(null);
 
-  // onEachFeature only runs once per layer, so the click handler reads compareMode through a ref
+  // onEachFeature only runs once per layer, so click handlers read live values through refs
   const compareRef = useRef(compareMode);
   compareRef.current = compareMode;
+  const pinModeRef = useRef(pinsActive);
+  pinModeRef.current = pinsActive;
+  const filtersRef = useRef({ statusFilter, timeFilter });
+  filtersRef.current = { statusFilter, timeFilter };
 
-  // new function identity whenever the selection changes, so react-leaflet re-applies styles
+  const currentId = currentSelectedSite?.siteProperties.EPA_ID;
+
+  // new function identity whenever anything visual changes, so react-leaflet re-applies styles
   const styleWithSelection = useCallback(
     (feature?: Feature<Geometry, any>): PathOptions => {
+      if (!siteMatchesFilters(feature?.properties, statusFilter, timeFilter)) return HIDDEN_STYLE;
       const id = feature?.properties?.EPA_ID;
-      return id && selectedSites.has(id) ? SELECTED_STYLE : styleSite(feature);
+      // flashing sites alternate blue / normal, so it shows even if they are already selected
+      if (id && flash?.ids.has(id)) return show(flash.on ? SELECTED_STYLE : styleSite(feature));
+      const picked = id && (selectedSites.has(id) || (!compareMode && id === currentId));
+      return show(picked ? SELECTED_STYLE : styleSite(feature));
     },
-    [selectedSites],
+    [selectedSites, currentId, compareMode, flash, statusFilter, timeFilter]
   );
 
-  useEffect(() => {
-    //fetch(`${baseUrl}data/Superfund_National_Priorities_List_(NPL)_Sites_with_Status_Information.geojson`)Groundwater Contamination Areas (CEA).geojson
-    //fetch(`${baseUrl}data/Groundwater Contamination Areas (CEA).geojson`)
-    fetch(`${baseUrl}data/Superfunds.geojson`)
-      .then((res: Response) => res.json())
-      .then((geojson) => {
-        setGeoData(geojson as FeatureCollection);
+  const loadSite = (epaId: string) => {
+    if (loading.has(epaId)) return;
+    loading.add(epaId);
+    inFlight++;
+    setconLoading(true);
+    fetchEpaSummary(epaId, new AbortController().signal)
+      .then((contaminants) => {
+        if (!contaminants) console.log('No additional EPA records found.');
+      })
+      .finally(() => {
+        loading.delete(epaId);
+        inFlight--;
+        setconLoading(inFlight > 0);
       });
+  };
+
+  useEffect(() => {
+    // ...existing GeoJSON fetch effect, unchanged
   }, []);
+
+  // slow blue flash on whatever was just focused, in any mode
+  useEffect(() => {
+    if (!focusRequest) return;
+    const ids = new Set(focusRequest.sites.map((s) => s.siteProperties.EPA_ID));
+    let ticks = 0;
+    setFlash({ ids, on: true });
+    const timer = setInterval(() => {
+      ticks++;
+      if (ticks >= FLASH_TOGGLES) {
+        clearInterval(timer);
+        setFlash(null);
+      } else {
+        setFlash({ ids, on: ticks % 2 === 0 });
+      }
+    }, FLASH_MS);
+    return () => clearInterval(timer);
+  }, [focusRequest]);
+
+  // select everything fully inside the pin area
+  useEffect(() => {
+    if (!geoData || !compareMode || !pinsActive) return;
+    const enclosed: SiteData[] = [];
+    if (pins.length >= 3) {
+      for (const f of geoData.features) {
+        const epaId = f.properties?.EPA_ID;
+        if (!epaId || !f.geometry) continue;
+        if (!siteMatchesFilters(f.properties, statusFilter, timeFilter)) continue;
+        if (!fullyEnclosed(f.geometry, pins)) continue;
+        let s = siteDataCache.get(epaId);
+        if (!s) {
+          s = new SiteData(f);
+          siteDataCache.set(epaId, s);
+        }
+        enclosed.push(s);
+      }
+    }
+    onPinSelection(enclosed);
+    for (const s of enclosed) {
+      if (s.siteContaminantList === undefined) loadSite(s.siteProperties.EPA_ID);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoData, pins, pinsActive, compareMode, statusFilter, timeFilter]);
 
   if (geoData === null) {
     return null;
-  } else {
   }
 
   const handleSelectSite = (feature: Feature<Geometry, any>, layer: any) => {
     layer.on({
       click: () => {
+        const { statusFilter: sf, timeFilter: tf } = filtersRef.current;
+        if (!siteMatchesFilters(feature.properties, sf, tf)) return; // hidden by a filter
+        if (compareRef.current && pinModeRef.current) return; // pin mode: clicks drop pins instead
+
         const s: SiteData = new SiteData(feature);
         const epaId: string = s.siteProperties.EPA_ID;
 
@@ -222,21 +302,16 @@ export function Polygons({
         if (compareRef.current) toggleSelectedSite(st);
         else setcurrentSelectedSite(st);
 
-        const controller = new AbortController();
-inFlight++;
-setconLoading(true);
-fetchEpaSummary(epaId, controller.signal)
-  .then((contaminants) => {
-    if (!contaminants){
-      console.log('No additional EPA records found.');
-    }
-  })
-  .finally(() => {
-    inFlight--;
-    setconLoading(inFlight > 0);
-  });
+        loadSite(epaId);
       },
     });
   };
-  return <GeoJSON data={geoData} onEachFeature={handleSelectSite} style={styleWithSelection} />;
+
+  return (
+    <GeoJSON
+      data={geoData}
+      onEachFeature={handleSelectSite}
+      style={styleWithSelection}
+    />
+  );
 }

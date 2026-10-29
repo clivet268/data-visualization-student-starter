@@ -1,7 +1,8 @@
 import styles from './spillover.module.css';
+import { SlidePanel } from './SlidePanel';
 export function NewsFeed() {
   return (
-    <div className={`${styles.panel} ${styles.newsFeed} ${styles.spilloverlay} ${styles.nicebox}`}>
+    <SlidePanel side="left" placement={styles.newsFeed}>
       <div className={styles.boxTitle}>News</div>
       <div className={styles.boxScroll}>
         <div className={styles.contentbox}>
@@ -15,6 +16,6 @@ export function NewsFeed() {
           </div>
         </div>
       </div>
-    </div>
+      </SlidePanel>
   );
 }

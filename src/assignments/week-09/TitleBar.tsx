@@ -7,13 +7,20 @@ interface CheckboxInputProps {
   setCompareMode: (value: boolean) => void;
   selectedCount: number;
   clearSelection: () => void;
+  focusSelected: () => void;
+  canFocus: boolean;
+  uiHidden: boolean;
+  toggleUiHidden: () => void;
 }
-
 export function TitleBar({
   compareMode,
   setCompareMode,
   selectedCount,
   clearSelection,
+  focusSelected,
+  canFocus,
+  uiHidden,
+  toggleUiHidden,
 }: CheckboxInputProps) {
   const [showFilterList, setFilterListShow] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -61,10 +68,15 @@ export function TitleBar({
         >
           Clear selection{selectedCount > 0 ? ` (${selectedCount})` : ''}
         </button>
-        <label className={styles.titleButton}>
-          Focus selected event
-          <input type="checkbox" />
-        </label>
+        
+        <button
+  type="button"
+  className={styles.titleButton}
+  onClick={focusSelected}
+  disabled={!canFocus}
+>
+  Focus selected event(s)
+</button>
         <div className={styles.statusFilter} ref={dropdownRef}>
           <button
             type="button"
