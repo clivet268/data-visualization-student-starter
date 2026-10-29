@@ -69,6 +69,10 @@ interface SiteContaminants {
   seq: number;
   type_code: string;
 }
+export interface Contaminant {
+  name: string;
+  media: string[];
+}
 
 export class SiteData {
   baseGeo: Geometry;
@@ -89,6 +93,19 @@ export class SiteData {
   addAllContaminants(con: SiteContaminants[]): void {
     this.siteContaminantList = (this.siteContaminantList ?? []).concat(con);
   }
+
+  // one entry per contaminant name, with every medium it appears in
+getContaminants(): Contaminant[] {
+  const byName = new Map<string, Set<string>>();
+  for (const c of this.siteContaminantList ?? []) {
+    const name = c.preferred_contaminant_name;
+    if (!name) continue;
+    const media = byName.get(name) ?? new Set<string>();
+    if (c.media_name) media.add(c.media_name);
+    byName.set(name, media);
+  }
+  return [...byName].map(([name, media]) => ({ name, media: [...media] }));
+}
 }
 
 interface MapInteractivity {
@@ -111,7 +128,8 @@ const SELECTED_STYLE: PathOptions = {
 };
 
 const siteDataCache: Map<string, SiteData> = new Map();
-
+// number of EPA requests currently in flight; conLoading is true while this is > 0
+let inFlight = 0;
 // "F" = Final NPL. Everything else (proposed, deleted, not on NPL, missing) is grey.
 const styleSite = (feature?: Feature<Geometry, any>): PathOptions => {
   if (feature?.properties?.NPL_STATUS === 'F') {
@@ -132,10 +150,10 @@ async function fetchEpaSummary(epaId: string, signal: AbortSignal): Promise<Site
     throw new Error('EPA ID not found in dataset');
   }
 
-  // cache hit: contaminants already loaded
-  if (s.siteContaminantList.length !== 0) {
-    return s;
-  }
+ // cache hit: contaminants already loaded (an empty array still counts as loaded)
+if (s.siteContaminantList !== undefined) {
+  return s;
+}
 
   const url =
     `https://data.epa.gov/dmapservice/sems.envirofacts_site/sems.envirofacts_site.epa_id/equals/` +
@@ -144,12 +162,12 @@ async function fetchEpaSummary(epaId: string, signal: AbortSignal): Promise<Site
   const res = await fetch(url, { headers: { Accept: 'application/json' }, signal });
   if (!res.ok) throw new Error(`EPA server returned ${res.status}`);
 
-  const jsons: SiteContaminants[] = await res.json();
-  if (!jsons || jsons.length === 0) return null;
+  const jsons: SiteContaminants[] = (await res.json()) ?? [];
 
-  s.siteContaminantList = jsons;
-  siteDataCache.set(epaId, s);
-  return s;
+// a loaded-but-empty result is valid; the left join also yields all-null rows, drop those
+s.siteContaminantList = jsons.filter((c) => c.preferred_contaminant_name);
+siteDataCache.set(epaId, s);
+return s.siteContaminantList.length === 0 ? null : s;
 }
 
 export function Polygons({
@@ -205,17 +223,18 @@ export function Polygons({
         else setcurrentSelectedSite(st);
 
         const controller = new AbortController();
-
-        setconLoading(true);
-        fetchEpaSummary(epaId, controller.signal)
-          .then((contaminants) => {
-            if (!contaminants) {
-              console.log('No additional EPA records found.');
-            }
-          })
-          .finally(() => {
-            if (!controller.signal.aborted) setconLoading(false);
-          });
+inFlight++;
+setconLoading(true);
+fetchEpaSummary(epaId, controller.signal)
+  .then((contaminants) => {
+    if (!contaminants){
+      console.log('No additional EPA records found.');
+    }
+  })
+  .finally(() => {
+    inFlight--;
+    setconLoading(inFlight > 0);
+  });
       },
     });
   };

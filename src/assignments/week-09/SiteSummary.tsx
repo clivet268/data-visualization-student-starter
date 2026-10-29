@@ -103,15 +103,15 @@ export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {
               <div className={styles.muted}>No contaminants listed.</div>
             )}
             {siteContaminantList && siteContaminantList.length > 0 && (
-              <ul className={styles.contentlist}>
-                {siteContaminantList.map((c) => (
-                  <li key={c.preferred_contaminant_name} className={styles.contentlistitem}>
-                    <strong>{c.preferred_contaminant_name}</strong>
-                    {c.media_name && ` (${c.media_name})`}
-                  </li>
-                ))}
-              </ul>
-            )}
+  <ul className={styles.contentlist}>
+    {selectedSite.getContaminants().map((c) => (
+      <li key={c.name} className={styles.contentlistitem}>
+        <strong>{c.name}</strong>
+        {c.media.length > 0 && ` (${c.media.join(', ')})`}
+      </li>
+    ))}
+  </ul>
+)}
           </div>
         </div>
 

@@ -8,7 +8,7 @@ export function Spillover() {
   const [selectedSites, setSelectedSites] = useState<Map<string, SiteData>>(new Map());
   const [currentSelectedSite, setcurrentSelectedSite] = useState<SiteData | null>(null);
   const [compareMode, setCompareMode] = useState(false);
-  const [conLoading, setconLoading] = useState<boolean>(true);
+  const [conLoading, setconLoading] = useState<boolean>(false);
 
   // click a polygon in compare mode: add it, or remove it if already selected
   const toggleSelectedSite = (site: SiteData) => {
