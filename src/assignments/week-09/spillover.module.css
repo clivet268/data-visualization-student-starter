@@ -37,6 +37,8 @@
   --pin-border: #ffffffff;
   --pin-shadow: #0c233199;
   --pin-region: #ff5a36ff;
+  --title-compact-scale: 0.67; /*haha 67*/
+  --group-divider: #ffffff40;
 }
 
 .spilloverlay {
@@ -45,23 +47,25 @@
 
 .titleBar {
   display: grid;
-  grid-template-columns: 200px 1fr 20%;
   background: var(--jet-black);
   color: var(--frozen-water);
   width: 100%;
   height: 10%;
   position: absolute;
   box-sizing: border-box;
+  grid-template-columns: 300px minmax(0, 1fr) 20%;
 }
 
 .title {
   justify-content: center;
-  justify-content: center;
-  align-items: center;
+  align-content: center;
   font-size: 40px;
   color: var(--frozen-water);
   margin: 10px;
   margin-left: 30px;
+  display: grid;
+  place-items: center;
+  width: 200px;
 }
 
 .newsFeed a {
@@ -373,6 +377,8 @@
 
 /* same look as .boxTitle, flared top-left / bottom-right */
 .titleButton {
+font-size: calc(1.1rem * var(--tb-scale, 1));
+padding: calc(6px * var(--tb-scale, 1)) calc(16px * var(--tb-scale, 1));
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -673,3 +679,76 @@
   box-shadow: 0 0 4px var(--pin-shadow);
   cursor: grab;
 }
+/* ---------- title bar layout ---------- */
+.titleControls {
+  --tb-scale: 1;
+  grid-column: 2 / -1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: calc(12px * var(--tb-scale));
+}
+.titleControls > * { flex: 0 0 auto; }
+.titleControls.titleCompact { --tb-scale: var(--title-compact-scale); }
+
+/* wavy container: its overflow clips the inner buttons' hover/active fills to its shape */
+.titleGroup {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--yale-blue);
+  border-bottom: 3px solid var(--fresh-sky);
+  border-radius: 20px 0 20px 0;
+}
+.groupButton {
+  flex: 1 1 auto;
+  font: inherit;
+  font-size: calc(1.1rem * var(--tb-scale, 1));
+  font-weight: 600;
+  padding: calc(6px * var(--tb-scale, 1)) calc(16px * var(--tb-scale, 1));
+  color: var(--pale-sky);
+  background: none;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+.groupButton + .groupButton { border-left: 2px solid var(--group-divider); }
+.groupButton:focus-visible { outline: 2px solid var(--pale-sky); outline-offset: -4px; }
+
+/* ---------- hide UI: title bar slides up, the tab stays ---------- */
+.titleBar {
+  transition: transform var(--slide-duration) ease, visibility 0s;
+}
+.uiHidden .titleBar {
+  transform: translateY(-100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform var(--slide-duration) ease, visibility 0s linear var(--slide-duration);
+}
+
+.hideTab {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--slide-toggle-fg);
+  background: var(--slide-toggle-bg);
+  border: 2px solid var(--slide-toggle-border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: top var(--slide-duration) ease, opacity var(--fade-duration) ease;
+}
+.hideTab:hover { background: var(--slide-toggle-bg-hover); }
+.hideTabHidden { top: 0; opacity: var(--ui-ghost-opacity); }

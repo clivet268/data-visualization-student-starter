@@ -28,7 +28,7 @@ export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {
       <div className={styles.boxTitle}>&nbsp;</div>
       <div className={styles.boxScroll}>
         <div className={styles.contentbox}>
-          <div className={styles.contentboxvalue}>No site content, please select a site</div>
+          <div className={styles.contentboxvalue}>No site content, please select a single site <br></br> (or exit Compare Mode and stop multi select)</div>
         </div>
       </div>
     </SlidePanel>
@@ -98,6 +98,12 @@ export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {
                 <span className={styles.contentdata}>{area}</span>
               </div>
             )}
+            <div className={styles.contentrow}>
+                <span className={styles.contentlabel}>EPA Site Page</span>
+              <span className={styles.contentdata}><a href={'https://' + siteUrl} target="_blank" rel="noopener noreferrer">
+                View EPA site page →
+              </a></span>
+            </div>
           </div>
         </div>
 
@@ -121,16 +127,6 @@ export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {
             )}
           </div>
         </div>
-
-        {siteUrl && (
-          <div className={styles.contentbox}>
-            <div className={styles.contentboxvalue}>
-              <a href={'https://' + siteUrl} target="_blank" rel="noopener noreferrer">
-                View EPA site page →
-              </a>
-            </div>
-          </div>
-        )}
       </div>    
 </SlidePanel>
   );

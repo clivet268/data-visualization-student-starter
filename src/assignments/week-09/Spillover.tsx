@@ -1,9 +1,9 @@
-import { MapBase } from './mapbase';
+import { useRef, useState } from 'react';
+import { MapBase, type FocusRequest } from './mapbase';
 import { Spilloverlay } from './Spilloverlay';
-import { useState } from 'react';
-import type { Feature, Geometry, FeatureCollection } from 'geojson';
 import { SiteData } from './Polygons';
-import type { FocusRequest } from './mapbase';
+import { ALL_STATUSES, type TimeKey } from './filters';
+import type { Pin } from './geo';
 
 export function Spillover() {
   const [selectedSites, setSelectedSites] = useState<Map<string, SiteData>>(new Map());
@@ -11,38 +11,50 @@ export function Spillover() {
   const [compareMode, setCompareMode] = useState(false);
   const [conLoading, setconLoading] = useState<boolean>(false);
   const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
-// nonce makes repeat requests for the same sites still fire
-const focusSites = (sites: SiteData[]) => setFocusRequest({ sites, nonce: Date.now() });
+  const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set(ALL_STATUSES));
+  const [timeFilter, setTimeFilter] = useState<TimeKey>('any');
+  const [pins, setPins] = useState<Pin[]>([]);
+  const [pinsActive, setPinsActive] = useState(false);
 
-  // click a polygon in compare mode: add it, or remove it if already selected
+  // ids that the pin area added, so they can be removed again when the area moves off them
+  const pinAdded = useRef<Set<string>>(new Set());
+
   const toggleSelectedSite = (site: SiteData) => {
+    const id = site.siteProperties.EPA_ID;
+    pinAdded.current.delete(id); // a manual choice sticks
     setSelectedSites((prev) => {
       const next = new Map(prev);
-      const id = site.siteProperties.EPA_ID;
       if (next.has(id)) next.delete(id);
       else next.set(id, site);
       return next;
     });
   };
 
-  // leaving compare mode clears the selection (and so the blue fills)
-  const handleSetCompareMode = (value: boolean) => {
-    setCompareMode(value);
+  const applyPinSelection = (enclosed: SiteData[]) => {
+    const next = new Map(selectedSites);
+    const enclosedIds = new Set(enclosed.map((s) => s.siteProperties.EPA_ID));
+    for (const id of [...pinAdded.current]) {
+      if (!enclosedIds.has(id)) { next.delete(id); pinAdded.current.delete(id); }
+    }
+    for (const s of enclosed) {
+      const id = s.siteProperties.EPA_ID;
+      if (!next.has(id)) { next.set(id, s); pinAdded.current.add(id); }
+    }
+    setSelectedSites(next);
   };
 
-  // selection now survives leaving compare mode; only this clears it
-  const clearSelection = () => setSelectedSites(new Map());
+  const clearSelection = () => { setSelectedSites(new Map()); pinAdded.current.clear(); };
+  // clearing pins keeps whatever they selected, as ordinary selections
+  const clearPins = () => { pinAdded.current.clear(); setPins([]); };
+
+  const focusSites = (sites: SiteData[]) => setFocusRequest({ sites, nonce: Date.now() });
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <div
         style={{
-          position: 'absolute',
-          top: '0px',
-          left: '0px',
-          zIndex: '1001',
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
+          position: 'absolute', top: '0px', left: '0px', zIndex: '1001',
+          width: '100%', height: '100%', pointerEvents: 'none',
         }}
       >
         <Spilloverlay
@@ -53,6 +65,14 @@ const focusSites = (sites: SiteData[]) => setFocusRequest({ sites, nonce: Date.n
           setCompareMode={setCompareMode}
           clearSelection={clearSelection}
           focusSites={focusSites}
+          pinsActive={pinsActive}
+          setPinsActive={setPinsActive}
+          pinCount={pins.length}
+          clearPins={clearPins}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          timeFilter={timeFilter}
+          setTimeFilter={setTimeFilter}
         />
       </div>
       <div style={{ width: '100%', height: '100%' }}>
@@ -62,7 +82,14 @@ const focusSites = (sites: SiteData[]) => setFocusRequest({ sites, nonce: Date.n
           compareMode={compareMode}
           selectedSites={selectedSites}
           toggleSelectedSite={toggleSelectedSite}
+          currentSelectedSite={currentSelectedSite}
           focusRequest={focusRequest}
+          statusFilter={statusFilter}
+          timeFilter={timeFilter}
+          pins={pins}
+          setPins={setPins}
+          pinsActive={pinsActive}
+          onPinSelection={applyPinSelection}
         />
       </div>
     </div>

@@ -233,8 +233,12 @@ export function Polygons({
   };
 
   useEffect(() => {
-    // ...existing GeoJSON fetch effect, unchanged
-  }, []);
+  fetch(`${baseUrl}data/Superfunds.geojson`)
+    .then((res: Response) => res.json())
+    .then((geojson) => {
+      setGeoData(geojson as FeatureCollection);
+    });
+}, []);
 
   // slow blue flash on whatever was just focused, in any mode
   useEffect(() => {
