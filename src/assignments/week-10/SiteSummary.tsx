@@ -1,6 +1,4 @@
 import styles from './spillover.module.css';
-import type { Feature, Geometry } from 'geojson';
-import { useEffect, useState } from 'react';
 import { SiteData } from './Polygons';
 import { SlidePanel } from './SlidePanel';
 interface SiteInfo {

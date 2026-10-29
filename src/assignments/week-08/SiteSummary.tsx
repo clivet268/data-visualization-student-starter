@@ -1,6 +1,4 @@
 import styles from './spillover.module.css';
-import type { Feature, Geometry } from 'geojson';
-import { useEffect, useState } from 'react';
 import { SiteData } from './Polygons';
 import { SlidePanel } from './SlidePanel';
 interface SiteInfo {
@@ -14,11 +12,6 @@ const NPL_STATUS_LABELS: Record<string, string> = {
   P: 'Proposed NPL',
   D: 'Deleted from NPL',
   N: 'Not on NPL',
-};
-
-const updateMap = (key: string, value: string) => {
-  // Spreads existing entries and appends/overwrites the new key-value array entry
-  setMyMap(new Map([...myMap, [key, value]]));
 };
 
 export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {

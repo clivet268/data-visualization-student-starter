@@ -1,6 +1,5 @@
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { Feature, Geometry } from 'geojson';
 import { Polygons, SiteData } from './Polygons';
 import { useEffect } from 'react';
 import L from 'leaflet';
