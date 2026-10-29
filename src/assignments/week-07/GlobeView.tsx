@@ -9,13 +9,13 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 const COUNTRIES_URL =
   'https://cdn.jsdelivr.net/npm/three-globe/example/country-polygons/ne_110m_admin_0_countries.geojson';
 
-const POLY_ALT = 0.006;          // polygon height above surface (fraction of globe radius)
-const SELECTED_ALT = 0.03;       // raised height for the clicked country
-const GLOBE_RADIUS = 100;        // three-globe default radius
+const POLY_ALT = 0.006; // polygon height above surface (fraction of globe radius)
+const SELECTED_ALT = 0.03; // raised height for the clicked country
+const GLOBE_RADIUS = 100; // three-globe default radius
 const GLOBE_COLOR = '#dddddd';
 const PAGE_BG = '#f1f1f1';
-const DOT_ALT = 1.07;        // dot height above the surface (multiple of the globe radius)
-const DOT_SIZE = 4.5;        // dot sprite size in world units
+const DOT_ALT = 1.07; // dot height above the surface (multiple of the globe radius)
+const DOT_SIZE = 4.5; // dot sprite size in world units
 const OUTLINE_COLOR = 'rgba(60, 60, 60, 0.85)';
 
 // ---------------------------------------------------------------------------
@@ -31,10 +31,10 @@ const INDEX_KEYS = 'ABCDEFG'.split('').map((l) => `Market Index ${l}`);
 const VALUES_PER_INDEX = 50;
 const CENTER_LOW = 2;
 const CENTER_HIGH = 8;
-const HIGH_TO_LOW_RATIO = 0.3;                           // weight of the 8 bell relative to the 2 bell
+const HIGH_TO_LOW_RATIO = 0.3; // weight of the 8 bell relative to the 2 bell
 const P_HIGH = HIGH_TO_LOW_RATIO / (1 + HIGH_TO_LOW_RATIO); // ~23% of sets are centered near 8
-const CENTER_SD = 1;   // spread of the centers around each bell
-const VALUE_SD = 1;    // spread of the 50 values around their center
+const CENTER_SD = 1; // spread of the centers around each bell
+const VALUE_SD = 1; // spread of the 50 values around their center
 
 const randn = () => {
   // standard normal (Box-Muller)
@@ -46,15 +46,154 @@ const randn = () => {
 const randomSet = (n = VALUES_PER_INDEX) => {
   const center = (Math.random() < P_HIGH ? CENTER_HIGH : CENTER_LOW) + randn() * CENTER_SD;
   return Array.from({ length: n }, () =>
-    Math.min(10, Math.max(0, Math.round((center + randn() * VALUE_SD) * 100) / 100))
+    Math.min(10, Math.max(0, Math.round((center + randn() * VALUE_SD) * 100) / 100)),
   );
 };
 
 // Stable id for a country feature (ADM0_A3 is populated even where ISO_A3 is -99)
 const countryId = (feature) => feature.properties.ADM0_A3 || feature.properties.ADMIN;
 
-const NAME_A = ['Destructive', 'Constructive', 'Steely', 'Revolutionary', 'Zeolite', 'Catalyst', 'Elastomer', 'Surfactant', 'Reagent', 'Polypeptide', 'Substrate', 'Enzyme', 'Polymer', 'Electrolyte', 'Isomerize', 'Polymerize', 'Ozonize', 'Decant', 'Saponify', 'Electrolyze', 'Magnetize', 'Alloy', 'Precipitate', 'Fluoresce', 'Enzymatize', 'Volatilize', 'Scintillate', 'Transesterify', 'Devitrify', 'Centrifuge', 'Agglomerate', 'Titrate', 'Lyophilize', 'Calcine', 'Apex', 'Nova', 'Terra', 'Helix', 'Orion', 'Vertex', 'Solstice', 'Atlas', 'Zenith', 'Cobalt', 'Meridian', 'Aurora', 'Summit', 'Borealis', 'Quantum', 'Ember', 'Tidal', 'Granite', 'Lumen', 'Pioneer', 'Energy', 'Sector', 'Industry', 'Leader', 'Logistics', 'Network', 'Power', 'Grid', 'Steel', 'Mill', 'Motor', 'Vehicle', 'Chemical', 'Reaction', 'Mining', 'Operation', 'Utility', 'Company', 'Freight', 'Train', 'Resource', 'Management', 'Cement', 'Mixer', 'Petroleum', 'Refinery', 'Airway', 'Route', 'Fuel', 'Source', 'Material', 'Science', 'Sprint', 'Jump', 'Accelerate', 'Catapult', 'Galvanize', 'Liquefy', 'Extrapolate', 'Synthesize', 'Coagulate', 'Automate', 'Sublime', 'Calibrate', 'Fracture'];
-const NAME_B = ['Construction', 'Commodities', 'Superalloy', 'Nanocomposite', 'Biopolymer', 'Photovoltaic', 'Superconductor', 'Cryogenics', 'Microfluidics', 'Piezoelectric', 'Aerogel', 'Metamaterial','Energy', 'Industries', 'Logistics', 'Power', 'Steel', 'Motors', 'Chemicals', 'Mining', 'Utilities', 'Freight', 'Resources', 'Cement', 'Petroleum', 'Airways', 'Fuels', 'Materials', 'Bioreactor', 'Semiconductor', 'Infrastructure', 'Automated', 'Metallurgy', 'Petrochemical', 'Logistics', 'Geothermal', 'Hydrocarbon', 'Aerospace'];
+const NAME_A = [
+  'Destructive',
+  'Constructive',
+  'Steely',
+  'Revolutionary',
+  'Zeolite',
+  'Catalyst',
+  'Elastomer',
+  'Surfactant',
+  'Reagent',
+  'Polypeptide',
+  'Substrate',
+  'Enzyme',
+  'Polymer',
+  'Electrolyte',
+  'Isomerize',
+  'Polymerize',
+  'Ozonize',
+  'Decant',
+  'Saponify',
+  'Electrolyze',
+  'Magnetize',
+  'Alloy',
+  'Precipitate',
+  'Fluoresce',
+  'Enzymatize',
+  'Volatilize',
+  'Scintillate',
+  'Transesterify',
+  'Devitrify',
+  'Centrifuge',
+  'Agglomerate',
+  'Titrate',
+  'Lyophilize',
+  'Calcine',
+  'Apex',
+  'Nova',
+  'Terra',
+  'Helix',
+  'Orion',
+  'Vertex',
+  'Solstice',
+  'Atlas',
+  'Zenith',
+  'Cobalt',
+  'Meridian',
+  'Aurora',
+  'Summit',
+  'Borealis',
+  'Quantum',
+  'Ember',
+  'Tidal',
+  'Granite',
+  'Lumen',
+  'Pioneer',
+  'Energy',
+  'Sector',
+  'Industry',
+  'Leader',
+  'Logistics',
+  'Network',
+  'Power',
+  'Grid',
+  'Steel',
+  'Mill',
+  'Motor',
+  'Vehicle',
+  'Chemical',
+  'Reaction',
+  'Mining',
+  'Operation',
+  'Utility',
+  'Company',
+  'Freight',
+  'Train',
+  'Resource',
+  'Management',
+  'Cement',
+  'Mixer',
+  'Petroleum',
+  'Refinery',
+  'Airway',
+  'Route',
+  'Fuel',
+  'Source',
+  'Material',
+  'Science',
+  'Sprint',
+  'Jump',
+  'Accelerate',
+  'Catapult',
+  'Galvanize',
+  'Liquefy',
+  'Extrapolate',
+  'Synthesize',
+  'Coagulate',
+  'Automate',
+  'Sublime',
+  'Calibrate',
+  'Fracture',
+];
+const NAME_B = [
+  'Construction',
+  'Commodities',
+  'Superalloy',
+  'Nanocomposite',
+  'Biopolymer',
+  'Photovoltaic',
+  'Superconductor',
+  'Cryogenics',
+  'Microfluidics',
+  'Piezoelectric',
+  'Aerogel',
+  'Metamaterial',
+  'Energy',
+  'Industries',
+  'Logistics',
+  'Power',
+  'Steel',
+  'Motors',
+  'Chemicals',
+  'Mining',
+  'Utilities',
+  'Freight',
+  'Resources',
+  'Cement',
+  'Petroleum',
+  'Airways',
+  'Fuels',
+  'Materials',
+  'Bioreactor',
+  'Semiconductor',
+  'Infrastructure',
+  'Automated',
+  'Metallurgy',
+  'Petrochemical',
+  'Logistics',
+  'Geothermal',
+  'Hydrocarbon',
+  'Aerospace',
+];
 const pickOf = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const companyName = () => `${pickOf(NAME_A)} ${pickOf(NAME_B)}`;
 
@@ -71,7 +210,15 @@ const METRICS = [
 //   B: 7 values (3 economy, 3 environment, 1 third group), 0-10   -> rec.b
 //   C: one value per company (50)           -> rec.companies[i].c
 //   D: 60 smooth-ish points Jan 1 - Oct 31, 0.1-10.1 plus noise   -> rec.d
-const B_ITEMS = ['GDP growth', 'Employment', 'Trade', 'Emissions', 'Biodiversity', 'Water', 'Wellbeing'];
+const B_ITEMS = [
+  'GDP growth',
+  'Employment',
+  'Trade',
+  'Emissions',
+  'Biodiversity',
+  'Water',
+  'Wellbeing',
+];
 // angle (degrees clockwise from the top) of each B value:
 // top third = economy, bottom-left = environment, bottom-right = the single-value third
 const B_ANGLES = [320, 0, 40, 200, 240, 280, 120];
@@ -92,7 +239,10 @@ const randomSeries = () => {
   }));
   const raw = Array.from({ length: SERIES_POINTS }, (_, i) => {
     const t = i / (SERIES_POINTS - 1);
-    return terms.reduce((sum, { amp, freq, phase }) => sum + amp * Math.sin(2 * Math.PI * freq * t + phase), 0);
+    return terms.reduce(
+      (sum, { amp, freq, phase }) => sum + amp * Math.sin(2 * Math.PI * freq * t + phase),
+      0,
+    );
   });
   const [lo, hi] = d3.extent(raw);
   const span = hi - lo || 1;
@@ -115,10 +265,10 @@ const valuesOf = (rec, metric) =>
   metric === 0
     ? rec.companies.map((c) => c.a)
     : metric === 1
-    ? rec.b
-    : metric === 2
-    ? rec.companies.map((c) => c.c)
-    : rec.d;
+      ? rec.b
+      : metric === 2
+        ? rec.companies.map((c) => c.c)
+        : rec.d;
 
 // Metric B shape in the same unit square the country shapes use: a rounded closed spline
 // whose distance from the center is the value (10 = touches the edge of the square)
@@ -152,7 +302,7 @@ function buildCountryData(features) {
       name: f.properties.ADMIN || f.properties.NAME,
       data,
       means: Object.fromEntries(
-        data.map(([key, rec]) => [key, METRICS.map((_, m) => d3.mean(valuesOf(rec, m)))])
+        data.map(([key, rec]) => [key, METRICS.map((_, m) => d3.mean(valuesOf(rec, m)))]),
       ),
     };
   });
@@ -172,10 +322,10 @@ const WHITE = new THREE.Color('#ffffff');
 const MAX_WHITE = 0.12; // how much white is mixed in at the lightest end
 const RANGES = [
   { lo: 0, hi: 2, color: new THREE.Color('#1ec0ff'), solidAtBottom: true }, // baby blue
-  { lo: 2, hi: 4, color: new THREE.Color('#ff8a1a') },                      // creamsicle orange
-  { lo: 4, hi: 5, color: new THREE.Color('#ff6a00') },                      // orange
-  { lo: 5, hi: 7, color: new THREE.Color('#ff2200') },                      // red-orange
-  { lo: 7, hi: 10, color: new THREE.Color('#c4000e') },                     // dark red
+  { lo: 2, hi: 4, color: new THREE.Color('#ff8a1a') }, // creamsicle orange
+  { lo: 4, hi: 5, color: new THREE.Color('#ff6a00') }, // orange
+  { lo: 5, hi: 7, color: new THREE.Color('#ff2200') }, // red-orange
+  { lo: 7, hi: 10, color: new THREE.Color('#c4000e') }, // dark red
 ];
 
 // Color for a value (0-10) under the given metric (index into METRICS):
@@ -185,7 +335,7 @@ const RANGES = [
 //   3 blue   -> red (0) to light red (5), then light blue (5) to full blue (10)
 const tint = (hex, whiteMix) => new THREE.Color(hex).lerp(WHITE, whiteMix);
 const VERY_LIGHT = 0.85; // white mixed in at the light end of the green / purple scales
-const LIGHT = 0.6;       // white mixed in for "light red" / "light blue"
+const LIGHT = 0.6; // white mixed in for "light red" / "light blue"
 
 function valueToColor(v, metric = 0) {
   if (v == null || Number.isNaN(v)) return '#cccccc';
@@ -196,8 +346,8 @@ function valueToColor(v, metric = 0) {
   if (metric === 3) {
     const c =
       x <= 5
-        ? tint(METRICS[0].color, (x / 5) * LIGHT)              // red -> light red
-        : tint(METRICS[3].color, (1 - (x - 5) / 5) * LIGHT);   // light blue -> blue
+        ? tint(METRICS[0].color, (x / 5) * LIGHT) // red -> light red
+        : tint(METRICS[3].color, (1 - (x - 5) / 5) * LIGHT); // light blue -> blue
     return `#${c.getHexString()}`;
   }
   const r = RANGES.find((rg) => x <= rg.hi) ?? RANGES[RANGES.length - 1];
@@ -265,16 +415,15 @@ function buildShape(feature) {
   const kept = infos.filter(
     (i) =>
       i === big ||
-      Math.hypot(wrap(i.clng - big.clng) * kBig, i.clat - big.clat) <=
-        MAINLAND_RADIUS * big.extent
+      Math.hypot(wrap(i.clng - big.clng) * kBig, i.clat - big.clat) <= MAINLAND_RADIUS * big.extent,
   );
 
   // Project every ring around the main landmass's center
   const rings = [];
   kept.forEach(({ poly }) =>
     poly.forEach((ring) =>
-      rings.push(ring.map(([lng, lat]) => [wrap(lng - big.clng) * kBig, -lat]))
-    )
+      rings.push(ring.map(([lng, lat]) => [wrap(lng - big.clng) * kBig, -lat])),
+    ),
   );
 
   const all = rings.flat();
@@ -289,7 +438,10 @@ function buildShape(feature) {
 
   const line = d3.line();
   const path = rings
-    .map((ring) => line(ring.map(([x, y]) => [r4((x - minx) / s + offX), r4((y - miny) / s + offY)])) + 'Z')
+    .map(
+      (ring) =>
+        line(ring.map(([x, y]) => [r4((x - minx) / s + offX), r4((y - miny) / s + offY)])) + 'Z',
+    )
     .join('');
   return { path, center: { lat: big.bcLat, lng: big.bcLng }, extent: big.extent };
 }
@@ -305,7 +457,7 @@ function latLngToVec(lat, lng, r) {
   return new THREE.Vector3(
     r * Math.sin(phi) * Math.cos(theta),
     r * Math.cos(phi),
-    r * Math.sin(phi) * Math.sin(theta)
+    r * Math.sin(phi) * Math.sin(theta),
   );
 }
 
@@ -352,8 +504,8 @@ const ROW_STEP = 17;
 const TOOLTIP_H = ROW_Y0 + (INDEX_KEYS.length - 1) * ROW_STEP + 12;
 const CONNECTOR_H = 26;
 const AXIS_H = 38;
-const AXIS_LEFT = 10;  // degrees C at the left end
-const AXIS_RIGHT = 0;  // degrees C at the right end
+const AXIS_LEFT = 10; // degrees C at the left end
+const AXIS_RIGHT = 0; // degrees C at the right end
 const OPACITY_BASE = 0.28;
 const OPACITY_HOVER = 0.8;
 const OPACITY_SELECTED = 1;
@@ -378,16 +530,25 @@ function ComparisonChart({ world, activeKey, metric, selectedId, size, onSelect 
   const items = useMemo(
     () =>
       Object.entries(world.data)
-        .map(([id, entry]) => ({ id, entry, name: entry.name, value: getValue(entry, activeKey, metric) }))
+        .map(([id, entry]) => ({
+          id,
+          entry,
+          name: entry.name,
+          value: getValue(entry, activeKey, metric),
+        }))
         .filter((d) => d.value != null)
         .sort((a, b) => a.value - b.value),
-    [world, activeKey, metric]
+    [world, activeKey, metric],
   );
 
   const margin = size * 0.8 + 10; // room so shapes at 0 and 10 (and hover growth) aren't clipped
   const x = useMemo(
-    () => d3.scaleLinear().domain([AXIS_LEFT, AXIS_RIGHT]).range([margin, width - margin]),
-    [width, margin]
+    () =>
+      d3
+        .scaleLinear()
+        .domain([AXIS_LEFT, AXIS_RIGHT])
+        .range([margin, width - margin]),
+    [width, margin],
   );
   const shapesY = TOOLTIP_H + CONNECTOR_H;
   const height = shapesY + size + AXIS_H;
@@ -402,7 +563,13 @@ function ComparisonChart({ world, activeKey, metric, selectedId, size, onSelect 
     // guide line through the shape centers
     svg
       .append('path')
-      .attr('d', line([[margin, midY], [width - margin, midY]]))
+      .attr(
+        'd',
+        line([
+          [margin, midY],
+          [width - margin, midY],
+        ]),
+      )
       .attr('stroke', '#d5dae3')
       .attr('stroke-dasharray', '3 4')
       .attr('fill', 'none');
@@ -411,7 +578,12 @@ function ComparisonChart({ world, activeKey, metric, selectedId, size, onSelect 
     const axis = svg
       .append('g')
       .attr('transform', `translate(0,${shapesY + size + 8})`)
-      .call(d3.axisBottom(x).ticks(10).tickFormat((d) => `${d}\u00b0C`));
+      .call(
+        d3
+          .axisBottom(x)
+          .ticks(10)
+          .tickFormat((d) => `${d}\u00b0C`),
+      );
     axis.selectAll('.domain, line').attr('stroke', '#9aa3b2');
     axis.selectAll('text').attr('fill', '#6b7280').attr('font-size', 10);
 
@@ -478,7 +650,13 @@ function ComparisonChart({ world, activeKey, metric, selectedId, size, onSelect 
       const g = svg.append('g');
 
       g.append('path')
-        .attr('d', line([[cx, TOOLTIP_H], [cx, shapesY]]))
+        .attr(
+          'd',
+          line([
+            [cx, TOOLTIP_H],
+            [cx, shapesY],
+          ]),
+        )
         .attr('stroke', '#111')
         .attr('stroke-width', 1.5);
 
@@ -501,10 +679,18 @@ function ComparisonChart({ world, activeKey, metric, selectedId, size, onSelect 
         .text(sel.name);
 
       g.append('path')
-        .attr('d', line([[bx + 10, 31], [bx + TOOLTIP_W - 10, 31]]))
+        .attr(
+          'd',
+          line([
+            [bx + 10, 31],
+            [bx + TOOLTIP_W - 10, 31],
+          ]),
+        )
         .attr('stroke', '#e3e6ec');
 
-      const rows = INDEX_KEYS.map((k) => [k, sel.entry.means[k][metric]]).sort((a, b) => b[1] - a[1]);
+      const rows = INDEX_KEYS.map((k) => [k, sel.entry.means[k][metric]]).sort(
+        (a, b) => b[1] - a[1],
+      );
 
       g.selectAll('rect.cur')
         .data(rows.map((r, i) => ({ r, i })).filter(({ r }) => r[0] === activeKey))
@@ -540,7 +726,20 @@ function ComparisonChart({ world, activeKey, metric, selectedId, size, onSelect 
         .attr('text-anchor', 'end')
         .text((r) => r[1].toFixed(2));
     }
-  }, [items, x, width, height, shapesY, margin, size, selectedId, activeKey, metric, world, onSelect]);
+  }, [
+    items,
+    x,
+    width,
+    height,
+    shapesY,
+    margin,
+    size,
+    selectedId,
+    activeKey,
+    metric,
+    world,
+    onSelect,
+  ]);
 
   return (
     <div
@@ -577,9 +776,9 @@ const FILLER_BELOW = [
 ];
 
 const BINS = [
-  { label: '4\u201310\u00b0C', test: (v) => v >= 4, color: '#ff0a0a' },            // red
-  { label: '2\u20134\u00b0C', test: (v) => v >= 2 && v < 4, color: '#ff6a00' },    // orange
-  { label: '0\u20132\u00b0C', test: (v) => v < 2, color: '#1ec0ff' },              // baby blue
+  { label: '4\u201310\u00b0C', test: (v) => v >= 4, color: '#ff0a0a' }, // red
+  { label: '2\u20134\u00b0C', test: (v) => v >= 2 && v < 4, color: '#ff6a00' }, // orange
+  { label: '0\u20132\u00b0C', test: (v) => v < 2, color: '#1ec0ff' }, // baby blue
 ];
 
 // "Portfolio list": every value of the current index from every country, pooled.
@@ -587,9 +786,7 @@ const BINS = [
 // Widths of the four elements are 5 : 8 : 8 : 8.
 function PortfolioStats({ world, activeKey, metric }) {
   const stats = useMemo(() => {
-    const all = Object.values(world.data).flatMap(
-      (e) => valuesOf(recOf(e, activeKey), metric)
-    );
+    const all = Object.values(world.data).flatMap((e) => valuesOf(recOf(e, activeKey), metric));
     const n = all.length;
     return {
       n,
@@ -622,7 +819,8 @@ function PortfolioStats({ world, activeKey, metric }) {
           <span style={{ fontSize: 18, fontWeight: 600 }}>{'\u00b0C'}</span>
         </div>
         <div style={{ marginTop: 6, fontSize: 11, color: '#6b7280' }}>
-          average of all {stats.n.toLocaleString()} values &middot; {activeKey} &middot; {METRICS[metric].name}
+          average of all {stats.n.toLocaleString()} values &middot; {activeKey} &middot;{' '}
+          {METRICS[metric].name}
         </div>
       </div>
 
@@ -646,7 +844,8 @@ function PortfolioStats({ world, activeKey, metric }) {
 const HEADER_H = 56;
 
 // Circle fill: a gradient that is just barely lighter at the top than at the bottom
-const lighten = (hex, amt) => `#${new THREE.Color(hex).lerp(new THREE.Color('#ffffff'), amt).getHexString()}`;
+const lighten = (hex, amt) =>
+  `#${new THREE.Color(hex).lerp(new THREE.Color('#ffffff'), amt).getHexString()}`;
 const circleGradient = (hex) => `linear-gradient(to bottom, ${lighten(hex, 0.16)}, ${hex})`;
 
 const roundBtn = {
@@ -703,13 +902,19 @@ function PredictionChart({ values }) {
   const width = useWidth(ref);
   const H = 260;
   const m = { l: 36, r: 16, t: 12, b: 30 };
-  const x = d3.scaleLinear().domain([0, 50]).range([m.l, width - m.r]);
-  const y = d3.scaleLinear().domain([0, 10.1]).range([H - m.b, m.t]);
+  const x = d3
+    .scaleLinear()
+    .domain([0, 50])
+    .range([m.l, width - m.r]);
+  const y = d3
+    .scaleLinear()
+    .domain([0, 10.1])
+    .range([H - m.b, m.t]);
   const cl = (v) => Math.min(10.1, Math.max(0, v));
 
   const sorted = [...values].sort(d3.ascending);
   const hi0 = [d3.quantile(sorted, 0.75), sorted[sorted.length - 1]]; // [bottom, top] of the high range
-  const lo0 = [sorted[0], d3.quantile(sorted, 0.25)];                 // [bottom, top] of the low range
+  const lo0 = [sorted[0], d3.quantile(sorted, 0.25)]; // [bottom, top] of the low range
   const band = ([bot0, top0], drop, spread) =>
     d3.range(0, 51).map((yr) => {
       const t = yr / 50;
@@ -718,32 +923,52 @@ function PredictionChart({ values }) {
     });
   const hi = band(hi0, 0.9, 0.4); // mostly flat, curving down slightly
   const lo = band(lo0, 1.4, 0.3); // curving down a bit more
-  const area = d3.area().x((d) => x(d.yr)).y0((d) => y(d.bot)).y1((d) => y(d.top));
-  const mid = d3.line().x((d) => x(d.yr)).y((d) => y((d.top + d.bot) / 2));
+  const area = d3
+    .area()
+    .x((d) => x(d.yr))
+    .y0((d) => y(d.bot))
+    .y1((d) => y(d.top));
+  const mid = d3
+    .line()
+    .x((d) => x(d.yr))
+    .y((d) => y((d.top + d.bot) / 2));
   const HI = '#ff4500';
   const LO = '#1ec0ff';
 
   return (
     <div ref={ref}>
       <div style={{ display: 'flex', gap: 16, fontSize: 11, color: '#4b5563', marginBottom: 6 }}>
-        <span><span style={{ color: HI }}>&#9632;</span> High range</span>
-        <span><span style={{ color: LO }}>&#9632;</span> Low range</span>
+        <span>
+          <span style={{ color: HI }}>&#9632;</span> High range
+        </span>
+        <span>
+          <span style={{ color: LO }}>&#9632;</span> Low range
+        </span>
       </div>
       <svg width={width} height={H} style={{ display: 'block' }}>
         {[0, 2, 4, 6, 8, 10].map((t) => (
           <g key={t}>
             <line x1={m.l} x2={width - m.r} y1={y(t)} y2={y(t)} stroke="#e8ebf1" />
-            <text x={m.l - 6} y={y(t) + 3} fontSize={10} fill="#6b7280" textAnchor="end">{t}</text>
+            <text x={m.l - 6} y={y(t) + 3} fontSize={10} fill="#6b7280" textAnchor="end">
+              {t}
+            </text>
           </g>
         ))}
         {[0, 10, 20, 30, 40, 50].map((t) => (
-          <text key={t} x={x(t)} y={H - 10} fontSize={10} fill="#6b7280" textAnchor="middle">{2026 + t}</text>
+          <text key={t} x={x(t)} y={H - 10} fontSize={10} fill="#6b7280" textAnchor="middle">
+            {2026 + t}
+          </text>
         ))}
         <path d={area(hi)} fill={HI} fillOpacity={0.28} />
         <path d={area(lo)} fill={LO} fillOpacity={0.32} />
         <path d={mid(hi)} stroke={HI} strokeWidth={2} fill="none" />
         <path d={mid(lo)} stroke={LO} strokeWidth={2} fill="none" />
-        {[[hi0[1], HI], [hi0[0], HI], [lo0[1], LO], [lo0[0], LO]].map(([v, c], i) => (
+        {[
+          [hi0[1], HI],
+          [hi0[0], HI],
+          [lo0[1], LO],
+          [lo0[0], LO],
+        ].map(([v, c], i) => (
           <circle key={i} cx={x(0)} cy={y(v)} r={4} fill={c} stroke="#fff" strokeWidth={1.5} />
         ))}
       </svg>
@@ -759,11 +984,16 @@ function RadialChart({ values, color }) {
   const cx = width / 2;
   const cy = 172;
   const R = 118;
-  const pt = (ang, r) => [cx + r * Math.sin((ang * Math.PI) / 180), cy - r * Math.cos((ang * Math.PI) / 180)];
+  const pt = (ang, r) => [
+    cx + r * Math.sin((ang * Math.PI) / 180),
+    cy - r * Math.cos((ang * Math.PI) / 180),
+  ];
   const pts = values
     .map((v, i) => ({ ang: B_ANGLES[i], v, name: B_ITEMS[i] }))
     .sort((a, b) => a.ang - b.ang);
-  const path = d3.line().curve(d3.curveCatmullRomClosed.alpha(0.5))(pts.map((p) => pt(p.ang, (p.v / 10) * R)));
+  const path = d3.line().curve(d3.curveCatmullRomClosed.alpha(0.5))(
+    pts.map((p) => pt(p.ang, (p.v / 10) * R)),
+  );
   const anchor = (ang) => {
     const sn = Math.sin((ang * Math.PI) / 180);
     return Math.abs(sn) < 0.3 ? 'middle' : sn > 0 ? 'start' : 'end';
@@ -776,7 +1006,9 @@ function RadialChart({ values, color }) {
         <circle cx={cx} cy={cy} r={R / 2} fill="none" stroke="#eef0f4" />
         {[60, 180, 300].map((a) => {
           const [px, py] = pt(a, R);
-          return <line key={a} x1={cx} y1={cy} x2={px} y2={py} stroke="#e3e6ec" strokeDasharray="3 4" />;
+          return (
+            <line key={a} x1={cx} y1={cy} x2={px} y2={py} stroke="#e3e6ec" strokeDasharray="3 4" />
+          );
         })}
         <path d={path} fill={color} fillOpacity={0.45} stroke={color} strokeWidth={2} />
         {pts.map((p) => {
@@ -794,7 +1026,15 @@ function RadialChart({ values, color }) {
         {B_SECTORS.map((sc) => {
           const [lx, ly] = pt(sc.ang, R + 38);
           return (
-            <text key={sc.label} x={lx} y={ly + 4} fontSize={13} fontWeight={700} fill="#111827" textAnchor={anchor(sc.ang)}>
+            <text
+              key={sc.label}
+              x={lx}
+              y={ly + 4}
+              fontSize={13}
+              fontWeight={700}
+              fill="#111827"
+              textAnchor={anchor(sc.ang)}
+            >
               {sc.label}
             </text>
           );
@@ -812,13 +1052,36 @@ function CompanyBars({ companies }) {
       {rows.map((c, i) => (
         <div
           key={i}
-          style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 1.2fr) 3fr 40px', gap: 12, alignItems: 'center', fontSize: 12 }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(120px, 1.2fr) 3fr 40px',
+            gap: 12,
+            alignItems: 'center',
+            fontSize: 12,
+          }}
         >
-          <span style={{ color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+          <span
+            style={{
+              color: '#111827',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {c.name}
+          </span>
           <div style={{ height: 12, borderRadius: 6, background: '#d9dce2', overflow: 'hidden' }}>
-            <div style={{ width: `${(c.c / 10) * 100}%`, height: '100%', background: METRICS[2].color }} />
+            <div
+              style={{
+                width: `${(c.c / 10) * 100}%`,
+                height: '100%',
+                background: METRICS[2].color,
+              }}
+            />
           </div>
-          <span style={{ fontFamily: 'monospace', color: '#4b5563', textAlign: 'right' }}>{c.c.toFixed(1)}</span>
+          <span style={{ fontFamily: 'monospace', color: '#4b5563', textAlign: 'right' }}>
+            {c.c.toFixed(1)}
+          </span>
         </div>
       ))}
     </div>
@@ -835,28 +1098,61 @@ function SeriesChart({ values }) {
   const barH = 54;
   const H = barTop + barH + 8;
   const N = values.length;
-  const x = d3.scaleLinear().domain([0, 12]).range([m.l, width - m.r]);
+  const x = d3
+    .scaleLinear()
+    .domain([0, 12])
+    .range([m.l, width - m.r]);
   const px = (i) => x((i / (N - 1)) * 10); // 10 months of data
-  const y = d3.scaleLinear().domain([0, 10.1]).range([m.t + lineH, m.t]);
-  const yb = d3.scaleLinear().domain([-5, 5.1]).range([barTop + barH, barTop]);
+  const y = d3
+    .scaleLinear()
+    .domain([0, 10.1])
+    .range([m.t + lineH, m.t]);
+  const yb = d3
+    .scaleLinear()
+    .domain([-5, 5.1])
+    .range([barTop + barH, barTop]);
   const cls = (v) => (Math.abs(v - 5) <= 1 ? SERIES_GRAY : v < 5 ? SERIES_RED : SERIES_BLUE);
   const bw = Math.max(1, (px(1) - px(0)) * 0.7);
 
   return (
     <div ref={ref}>
       <svg width={width} height={H} style={{ display: 'block' }}>
-        <rect x={m.l} y={y(6)} width={width - m.l - m.r} height={y(4) - y(6)} fill={SERIES_GRAY} fillOpacity={0.12} />
+        <rect
+          x={m.l}
+          y={y(6)}
+          width={width - m.l - m.r}
+          height={y(4) - y(6)}
+          fill={SERIES_GRAY}
+          fillOpacity={0.12}
+        />
         {[0, 2, 4, 6, 8, 10].map((t) => (
           <g key={t}>
             <line x1={m.l} x2={width - m.r} y1={y(t)} y2={y(t)} stroke="#eef0f4" />
-            <text x={m.l - 6} y={y(t) + 3} fontSize={10} fill="#6b7280" textAnchor="end">{t}</text>
+            <text x={m.l - 6} y={y(t) + 3} fontSize={10} fill="#6b7280" textAnchor="end">
+              {t}
+            </text>
           </g>
         ))}
-        <line x1={m.l} x2={width - m.r} y1={y(5)} y2={y(5)} stroke="#9aa3b2" strokeDasharray="4 4" />
+        <line
+          x1={m.l}
+          x2={width - m.r}
+          y1={y(5)}
+          y2={y(5)}
+          stroke="#9aa3b2"
+          strokeDasharray="4 4"
+        />
         {MONTHS.map((mo, i) => (
           <g key={mo}>
             <line x1={x(i)} x2={x(i)} y1={m.t} y2={m.t + lineH} stroke="#f1f3f7" />
-            <text x={x(i + 0.5)} y={m.t + lineH + 16} fontSize={10} fill="#6b7280" textAnchor="middle">{mo}</text>
+            <text
+              x={x(i + 0.5)}
+              y={m.t + lineH + 16}
+              fontSize={10}
+              fill="#6b7280"
+              textAnchor="middle"
+            >
+              {mo}
+            </text>
           </g>
         ))}
         {values.slice(0, -1).map((v, i) => (
@@ -876,8 +1172,12 @@ function SeriesChart({ values }) {
         ))}
 
         <line x1={m.l} x2={width - m.r} y1={yb(0)} y2={yb(0)} stroke="#9aa3b2" />
-        <text x={m.l - 6} y={barTop + 8} fontSize={10} fill="#6b7280" textAnchor="end">+</text>
-        <text x={m.l - 6} y={barTop + barH} fontSize={10} fill="#6b7280" textAnchor="end">&#8722;</text>
+        <text x={m.l - 6} y={barTop + 8} fontSize={10} fill="#6b7280" textAnchor="end">
+          +
+        </text>
+        <text x={m.l - 6} y={barTop + barH} fontSize={10} fill="#6b7280" textAnchor="end">
+          &#8722;
+        </text>
         {values.map((v, i) => (
           <rect
             key={i}
@@ -921,8 +1221,15 @@ function IndexComparison({ world, selectedId, activeKey, metric }) {
   const entry = world.data[selectedId];
   const H = 250;
   const m = { l: 36, r: 16, t: 16, b: 30 };
-  const x = d3.scaleBand().domain(INDEX_KEYS).range([m.l, width - m.r]).padding(0.3);
-  const y = d3.scaleLinear().domain([0, 10]).range([H - m.b, m.t]);
+  const x = d3
+    .scaleBand()
+    .domain(INDEX_KEYS)
+    .range([m.l, width - m.r])
+    .padding(0.3);
+  const y = d3
+    .scaleLinear()
+    .domain([0, 10])
+    .range([H - m.b, m.t]);
   const bars = INDEX_KEYS.map((k) => ({
     k,
     v: entry.means[k][metric],
@@ -942,7 +1249,9 @@ function IndexComparison({ world, selectedId, activeKey, metric }) {
           {[0, 2, 4, 6, 8, 10].map((t) => (
             <g key={t}>
               <line x1={m.l} x2={width - m.r} y1={y(t)} y2={y(t)} stroke="#e8ebf1" />
-              <text x={m.l - 6} y={y(t) + 3} fontSize={10} fill="#6b7280" textAnchor="end">{t}</text>
+              <text x={m.l - 6} y={y(t) + 3} fontSize={10} fill="#6b7280" textAnchor="end">
+                {t}
+              </text>
             </g>
           ))}
           {bars.map((b) => (
@@ -957,10 +1266,24 @@ function IndexComparison({ world, selectedId, activeKey, metric }) {
                 stroke={b.k === activeKey ? '#111' : 'none'}
                 strokeWidth={1.5}
               />
-              <text x={x(b.k) + x.bandwidth() / 2} y={y(b.v) - 5} fontSize={10} fill="#111827" textAnchor="middle" fontFamily="monospace">
+              <text
+                x={x(b.k) + x.bandwidth() / 2}
+                y={y(b.v) - 5}
+                fontSize={10}
+                fill="#111827"
+                textAnchor="middle"
+                fontFamily="monospace"
+              >
                 {b.v.toFixed(2)}
               </text>
-              <line x1={x(b.k) - 3} x2={x(b.k) + x.bandwidth() + 3} y1={y(b.avg)} y2={y(b.avg)} stroke="#111" strokeWidth={2} />
+              <line
+                x1={x(b.k) - 3}
+                x2={x(b.k) + x.bandwidth() + 3}
+                y1={y(b.avg)}
+                y2={y(b.avg)}
+                stroke="#111"
+                strokeWidth={2}
+              />
               <text
                 x={x(b.k) + x.bandwidth() / 2}
                 y={H - 10}
@@ -989,7 +1312,7 @@ export default function GlobeView() {
 
   const panelRef = useRef(null);
   const bodyRef = useRef(null);
-  const panelHRef = useRef(null);      // null = default height
+  const panelHRef = useRef(null); // null = default height
   const panelOpenRef = useRef(true);
 
   const [world, setWorld] = useState(null); // { data, shapes } once loaded
@@ -1024,10 +1347,10 @@ export default function GlobeView() {
       metric === 0
         ? rec.companies.map((c) => ({ name: c.name, v: c.a }))
         : metric === 2
-        ? rec.companies.map((c) => ({ name: c.name, v: c.c }))
-        : metric === 1
-        ? rec.b.map((v, i) => ({ name: B_ITEMS[i], v }))
-        : rec.d.map((v, i) => ({ name: seriesLabel(i), v }));
+          ? rec.companies.map((c) => ({ name: c.name, v: c.c }))
+          : metric === 1
+            ? rec.b.map((v, i) => ({ name: B_ITEMS[i], v }))
+            : rec.d.map((v, i) => ({ name: seriesLabel(i), v }));
     const top = items.sort((a, b) => b.v - a.v).slice(0, 4);
     return { name: e.name, top };
   }, [world, hoverId, activeKey, metric]);
@@ -1088,7 +1411,7 @@ export default function GlobeView() {
         const tex = new THREE.CanvasTexture(canvas);
         if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
         const sprite = new THREE.Sprite(
-          new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false })
+          new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }),
         );
         sprite.position.copy(latLngToVec(c.lat, c.lng, GLOBE_RADIUS * DOT_ALT));
         sprite.userData.id = id;
@@ -1104,7 +1427,7 @@ export default function GlobeView() {
       const colorOf = (f) =>
         valueToColor(
           getValue(worldRef.current.data[countryId(f)], activeKeyRef.current, metricRef.current),
-          metricRef.current
+          metricRef.current,
         );
       const isSel = (f) => countryId(f) === selectedIdRef.current;
       Globe.polygonCapColor((f) => colorOf(f))
@@ -1164,7 +1487,7 @@ export default function GlobeView() {
     // --- Picking: ray -> invisible sphere -> lat/lng -> country polygon ---
     const pickSphere = new THREE.Mesh(
       new THREE.SphereGeometry(GLOBE_RADIUS, 48, 48),
-      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
     );
     Globe.add(pickSphere); // child of Globe so it follows the spin
 
@@ -1173,14 +1496,14 @@ export default function GlobeView() {
     const el = renderer.domElement;
     let downPos = null;
     let pointerIsDown = false; // true while the mouse is held down (dragging)
-    let tween = null;          // camera fly-to animation
+    let tween = null; // camera fly-to animation
 
     // Which country is under the pointer: a dot first, otherwise the polygon on the sphere
     const pick = (e) => {
       const rect = el.getBoundingClientRect();
       pointer.set(
         ((e.clientX - rect.left) / rect.width) * 2 - 1,
-        -((e.clientY - rect.top) / rect.height) * 2 + 1
+        -((e.clientY - rect.top) / rect.height) * 2 + 1,
       );
       raycaster.setFromCamera(pointer, camera);
       const sphereHit = raycaster.intersectObject(pickSphere, false)[0];
@@ -1251,7 +1574,7 @@ export default function GlobeView() {
       const toDist = THREE.MathUtils.clamp(
         GLOBE_RADIUS + gap,
         controls.minDistance,
-        controls.maxDistance
+        controls.maxDistance,
       );
 
       tween = {
@@ -1438,7 +1761,12 @@ export default function GlobeView() {
           {tip.top.map((t, i) => (
             <div
               key={i}
-              style={{ display: 'flex', justifyContent: 'space-between', gap: 16, fontFamily: 'monospace' }}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: 16,
+                fontFamily: 'monospace',
+              }}
             >
               <span>{t.name}</span>
               <span>{t.v.toFixed(1)}</span>
@@ -1653,7 +1981,12 @@ export default function GlobeView() {
           ))}
 
           {world && selectedEntry && (
-            <IndexComparison world={world} selectedId={selectedId} activeKey={activeKey} metric={metric} />
+            <IndexComparison
+              world={world}
+              selectedId={selectedId}
+              activeKey={activeKey}
+              metric={metric}
+            />
           )}
         </div>
       </div>
