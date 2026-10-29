@@ -1,0 +1,404 @@
+:root {
+  /*https://coolors.co/bee9e8-62b6cb-1b4965-cae9ff-5fa8d3*/
+  /*^^^ ive found it very handy -268*/
+  --frozen-water: #bee9e8ff;
+  --pacific-blue: #62b6cbff;
+  --yale-blue: #1b4965ff;
+  --pale-sky: #cae9ffff;
+  --fresh-sky: #5fa8d3ff;
+  --steel-blue: #7399b2ff;
+  --jet-black: #0c2331ff;
+  --blue-bell: #3698d9ff;
+  --windowborder: 3px;
+}
+
+.spilloverlay {
+  pointer-events: auto;
+}
+
+.titleBar {
+  display: grid;
+  grid-template-columns: 200px 1fr 20%;
+  background: var(--jet-black);
+  color: var(--frozen-water);
+  width: 100%;
+  height: 10%;
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.title {
+  justify-content: center;
+  justify-content: center;
+  align-items: center;
+  font-size: 40px;
+  color: var(--frozen-water);
+  margin: 10px;
+  margin-left: 30px;
+}
+
+.newsFeed a {
+  border-top: 5px solid var(--fresh-sky);
+  margin: 15px;
+  /*padding: 15px;*/
+}
+
+.newsFeed {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  box-sizing: border-box;
+  background: var(--frozen-water);
+  width: 20%;
+  height: 40%;
+  top: 10%;
+  position: absolute;
+  padding: 10px;
+  padding-top: 20px;
+  overflow: hidden;
+}
+
+.newsFeedTitle {
+  flex: 0 0 auto;
+}
+
+.newsFeedScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.newsFeedList {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+}
+
+.siteSummary {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  background: var(--frozen-water);
+  left: 75%;
+  width: 25%;
+  height: 60%;
+  top: 10%;
+  position: absolute;
+  padding: 10px;
+  padding-top: 20px;
+  overflow-y: auto;
+}
+
+.containerBase {
+  border-radius: 25px;
+  width: 1000px;
+  height: 800px;
+  display: grid;
+  background: var(--pale-sky);
+  padding: 10px;
+  grid-template-columns: 2fr 1fr 1fr;
+  color: var(--yale-blue);
+  /*color: #fff;*/
+}
+
+.base {
+  border-radius: 25px;
+  background: var(--frozen-water);
+}
+
+.objBox {
+  text-align: center;
+  padding: 5px;
+  margin-top: 1px;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.activity {
+  /*background: #456500;*/
+  background: var(--steel-blue);
+  border-radius: 10px;
+}
+
+.reporter {
+  background: var(--steel-blue);
+  border-radius: 10px;
+}
+
+.activityAssigned {
+  background: var(--blue-bell);
+}
+
+.reporterAssigned {
+  background: var(--blue-bell);
+}
+.assignedTable {
+  box-sizing: border-box;
+  background: var(--pacific-blue);
+  padding: 10px;
+  padding-top: 20px;
+  text-align: center;
+  overflow-y: auto;
+}
+.assignedTable th {
+  background: var(--jet-black);
+  color: #fff;
+}
+
+.assignedTable table {
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--fresh-sky);
+  padding: 10px;
+  text-align: center;
+}
+
+.unassignedTable {
+  border-radius: 10px;
+  box-sizing: border-box;
+  background: var(--fresh-sky);
+  padding: 10px;
+  text-align: center;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.unassignedTable table {
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  /*background: #faded0;*/
+  background: var(--fresh-sky);
+  padding: 10px;
+  text-align: center;
+}
+
+.controlBar {
+  border-radius: 10px;
+  display: grid;
+  background: var(--steel-blue);
+  /*padding: 10px;*/
+  gap: 10px;
+  grid-template-rows: 2fr 1fr 1fr 1fr 1fr 1fr 2fr 1fr 1fr;
+  place-items: center;
+}
+
+.controlBar button {
+  background: var(--steel-blue);
+  width: 90%;
+}
+.controlBar input {
+  background: var(--steel-blue);
+  width: 90%;
+}
+
+.tableHead {
+  box-sizing: border-box;
+  position: sticky;
+  z-index: 1;
+  top: -10px;
+  background: #7fd10c;
+  padding: 10px;
+}
+.controlPanel {
+  margin: -10px;
+}
+
+.nicebox {
+  padding: 3px;
+  border-radius: 20px;
+  border-top: var(--windowborder) solid var(--fresh-sky);
+  border-left: var(--windowborder) solid var(--fresh-sky);
+  border-bottom: var(--windowborder) solid var(--yale-blue);
+  border-right: var(--windowborder) solid var(--yale-blue);
+}
+.titleBar.nicebox {
+  border-radius: 40px 4px 40px 4px;
+}
+/* shared panel: must stay BELOW .nicebox so its padding wins */
+.panel {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  box-sizing: border-box;
+  background: var(--frozen-water);
+  padding: 10px;
+  overflow: hidden;
+}
+
+/* pinned title, never scrolls */
+.boxTitle {
+  flex: 0 0 auto;
+  margin: 0 0 8px 0;
+  padding: 8px 12px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--pale-sky);
+  background-color: var(--yale-blue);
+  border-radius: 20px 2px 20px 2px;
+  border-bottom: var(--windowborder) solid var(--fresh-sky);
+  border-right: var(--windowborder) solid var(--fresh-sky);
+}
+
+.boxSubtitle {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--frozen-water);
+}
+
+/* scrolling area under the title */
+.boxScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.contentbox {
+  border: var(--windowborder) solid rgb(80, 118, 143);
+  border-radius: 10px 0px 0px 0px;
+  display: grid;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.contentboxname {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--pale-sky);
+  background-color: rgb(80, 118, 143);
+  justify-content: center;
+}
+.contentboxvalue {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  background-color: rgb(110, 148, 173);
+}
+
+/* label/value rows inside a .contentboxvalue */
+.contentrow {
+  display: grid;
+  grid-template-columns: 40% 1fr;
+  gap: 8px;
+  padding: 2px 0;
+}
+.contentlabel {
+  font-weight: 600;
+  color: var(--jet-black);
+}
+.contentdata {
+  overflow-wrap: anywhere;
+}
+
+.contentlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.contentlistitem {
+  padding: 2px 0;
+  border-top: 1px solid rgb(80, 118, 143);
+}
+.contentlistitem:first-child {
+  border-top: none;
+}
+
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--yale-blue);
+  color: var(--pale-sky);
+  font-size: 0.85rem;
+}
+
+.muted {
+  color: var(--jet-black);
+  opacity: 0.75;
+}
+
+.panel a {
+  color: var(--jet-black);
+}
+.statsPanel {
+  left: 0;
+  bottom: 0;
+  width: 60%;
+  height: 40%;
+}
+
+.titleControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* same look as .boxTitle, flared top-left / bottom-right */
+.titleButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 6px 16px;
+  color: var(--pale-sky);
+  background-color: var(--yale-blue);
+  border: none;
+  border-bottom: 3px solid var(--fresh-sky);
+  border-radius: 20px 0 20px 0;
+  cursor: pointer;
+}
+.titleButton:hover {
+  background-color: var(--blue-bell);
+}
+.titleButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background-color: var(--yale-blue);
+}
+.titleButtonActive {
+  background-color: var(--blue-bell);
+  border-bottom-color: var(--pale-sky);
+}
+
+.statusFilter {
+  position: relative;
+}
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 6px;
+  z-index: 10;
+  min-width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0;
+  color: var(--jet-black);
+  background: var(--frozen-water);
+  border: 3px solid var(--yale-blue);
+  border-radius: 10px 0 10px 0;
+}
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dropdownItem:hover {
+  background: var(--pale-sky);
+}
