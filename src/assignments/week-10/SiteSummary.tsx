@@ -16,11 +16,6 @@ const NPL_STATUS_LABELS: Record<string, string> = {
   N: 'Not on NPL',
 };
 
-const updateMap = (key: string, value: string) => {
-  // Spreads existing entries and appends/overwrites the new key-value array entry
-  setMyMap(new Map([...myMap, [key, value]]));
-};
-
 export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {
   if (!selectedSite) {
   return (
