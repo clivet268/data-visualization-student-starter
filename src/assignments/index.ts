@@ -7,7 +7,8 @@ import { AddTooltipHover } from './week-05/AddTooltipHover';
 import { Spillover as SpilloverOld } from './week-06/Spillover';
 import GlobeView from './week-07/GlobeView.jsx';
 import { Spillover as SpilloverOld1 } from './week-08/Spillover';
-import { Spillover } from './week-10/Spillover';
+import { Spillover as SpilloverOld2 } from './week-10/Spillover';
+import { Spillover } from './week-11/Spillover';
 
 export interface Assignment {
   id: string;
@@ -59,6 +60,11 @@ export const assignments: Assignment[] = [
   {
     id: '10',
     name: 'Week 10',
+    component: SpilloverOld2,
+  },
+  {
+    id: '11',
+    name: 'Week 11',
     component: Spillover,
   },
 ];
