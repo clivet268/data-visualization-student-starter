@@ -41,3 +41,50 @@ export function pinAreaAcres(pins: Pin[]): number | null {
   }
   return Math.abs((sum * R * R) / 2) / 4046.8564224;
 }
+
+// removes one pin; a group left empty is deleted and the active index is kept pointing at a real group
+export function dropPin(groups: Pin[][], active: number, gi: number, i: number): { groups: Pin[][]; active: number } {
+  const g = groups[gi].filter((_, j) => j !== i);
+  if (g.length > 0) return { groups: groups.map((x, k) => (k === gi ? g : x)), active };
+  const next = groups.filter((_, k) => k !== gi);
+  const a = gi < active ? active - 1 : active;
+  return { groups: next, active: Math.max(0, Math.min(a, next.length - 1)) };
+}
+
+// total outlined area over every group that has 3+ pins; null if none do
+export function pinGroupsAcres(groups: Pin[][]): number | null {
+  const areas = groups.map(pinAreaAcres).filter((a): a is number => a !== null);
+  return areas.length ? areas.reduce((s, a) => s + a, 0) : null;
+}
+
+export type BBox = [number, number, number, number]; // [minLng, minLat, maxLng, maxLat]
+
+export function bboxOf(g: Geometry): BBox | null {
+  if (g.type === 'GeometryCollection') return null;
+  const b: BBox = [Infinity, Infinity, -Infinity, -Infinity];
+  const walk = (c: unknown): void => {
+    if (!Array.isArray(c)) return;
+    if (typeof c[0] === 'number') {
+      const [x, y] = c as number[];
+      b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y);
+      b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y);
+    } else c.forEach(walk);
+  };
+  walk(g.coordinates);
+  return Number.isFinite(b[0]) ? b : null;
+}
+
+// index of the box nearest the point (distance 0 when inside it), only among boxes where ok(i) is true; -1 if none
+export function nearestBox(boxes: (BBox | null)[], lat: number, lng: number, ok: (i: number) => boolean): number {
+  const k = Math.cos((lat * Math.PI) / 180);
+  let best = -1;
+  let bestD = Infinity;
+  let bestC = Infinity;
+  boxes.forEach((b, i) => {
+    if (!b || !ok(i)) return;
+    const d = Math.hypot(Math.max(b[0] - lng, 0, lng - b[2]) * k, Math.max(b[1] - lat, 0, lat - b[3]));
+    const cd = Math.hypot(((b[0] + b[2]) / 2 - lng) * k, (b[1] + b[3]) / 2 - lat); // tie-break: closest centre
+    if (d < bestD || (d === bestD && cd < bestC)) { best = i; bestD = d; bestC = cd; }
+  });
+  return best;
+}

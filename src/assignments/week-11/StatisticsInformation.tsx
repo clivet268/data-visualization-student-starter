@@ -58,12 +58,15 @@ interface HoverApi {
   click: (t: TipTarget) => void;
 }
 
+//TODO this feels like it could be much simpler - 268
 const HIST_DATE_FIELD = 'LAST_CHANG' as const; // or 'ORIGINAL_C'
 const HIST_MS = 450;
 const BUCKET_MAX = 60;
-type Unit = 'months' | 'years';
+type Unit = 'months' | 'years' | 'decades';
+const UNITS: Unit[] = ['months', 'years', 'decades'];
+const UNIT_FMT = { months: d3.timeFormat('%b %Y'), years: d3.timeFormat('%Y'), decades: d3.timeFormat('%Y') };
+
 const fmtDate = d3.timeFormat('%b %-d, %Y');
-const UNIT_FMT = { months: d3.timeFormat('%b %Y'), years: d3.timeFormat('%Y') };
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 interface Bucket { key: string; label: string; sites: { id: string; name: string; date: number }[] }
@@ -76,16 +79,18 @@ function makeBuckets(sites: SiteData[], size: number, unit: Unit): Bucket[] {
       : [];
   });
   if (dated.length === 0) return [];
-  const interval = unit === 'years' ? d3.timeYear : d3.timeMonth;
+  const interval = unit === 'months' ? d3.timeMonth : d3.timeYear;
+  const step = unit === 'decades' ? size * 10 : size; // in months or years
   const f = UNIT_FMT[unit];
-  const start = interval.floor(new Date(d3.min(dated, (d) => d.date)!));
-  const count = Math.floor(interval.count(start, new Date(d3.max(dated, (d) => d.date)!)) / size) + 1;
+  const min = new Date(d3.min(dated, (d) => d.date)!);
+  const start = unit === 'decades' ? new Date(Math.floor(min.getFullYear() / 10) * 10, 0, 1) : interval.floor(min);
+  const count = Math.floor(interval.count(start, new Date(d3.max(dated, (d) => d.date)!)) / step) + 1;
   const buckets: Bucket[] = d3.range(count).map((i) => {
-    const from = interval.offset(start, i * size);
-    const last = interval.offset(start, (i + 1) * size - 1);
-    return { key: String(i), label: size === 1 ? f(from) : `${f(from)}–${f(last)}`, sites: [] };
+    const from = interval.offset(start, i * step);
+    const last = interval.offset(start, (i + 1) * step - 1);
+    return { key: String(i), label: step === 1 ? f(from) : `${f(from)}–${f(last)}`, sites: [] };
   });
-  for (const d of dated) buckets[Math.floor(interval.count(start, new Date(d.date)) / size)].sites.push(d);
+  for (const d of dated) buckets[Math.floor(interval.count(start, new Date(d.date)) / step)].sites.push(d);
   buckets.forEach((b) => b.sites.sort((a, c) => a.name.localeCompare(c.name)));
   return buckets;
 }
@@ -478,7 +483,42 @@ function MiniPie({ data }: { data: Slice[] }) {
     </div>
   );
 }
+function UnitSelect({ value, onChange }: { value: Unit; onChange: (u: Unit) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, []);
+
+  return (
+    <div className={styles.statusFilter} ref={ref}>
+      <button type="button" className={styles.titleButton} aria-expanded={open} onClick={() => setOpen(!open)}>
+        {value.charAt(0).toUpperCase() + value.slice(1)} {open ? '▴' : '▾'}
+      </button>
+      {open && (
+        <div className={styles.dropdownMenu} role="menu">
+          {UNITS.map((u) => (
+            <button
+              key={u}
+              type="button"
+              role="menuitemradio"
+              aria-checked={u === value}
+              className={`${styles.dropdownItem} ${styles.unitOption} ${u === value ? styles.unitOptionActive : ''}`}
+              onClick={() => { onChange(u); setOpen(false); }}
+            >
+              {u}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 export function SitesStatistics({ selectedSites, compareMode, onSiteClick, pinsActive, outlinedAcres }: StatsInfo) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
@@ -487,6 +527,7 @@ export function SitesStatistics({ selectedSites, compareMode, onSiteClick, pinsA
   const [zoom, setZoom] = useState(ZOOM_MIN);
   const [bucketSize, setBucketSize] = useState(1);
 const [bucketUnit, setBucketUnit] = useState<Unit>('years');
+const [bucketText, setBucketText] = useState('1'); // what's typed; bucketSize only updates on a valid number
 const geomRef = useRef(new Map<string, Geom>()); // last histogram segment geometry, for the transitions
   const mouse = useRef({ x: 0, y: 0 });
 const [pinned, setPinned] = useState<TipTarget[]>([]); // at most MAX_PINNED, oldest first
@@ -877,15 +918,26 @@ const renderTips = () => {
           </button>
         </div>
 {tab === 'timeline' && (
-  <div className={styles.zoomControls}>
+  <div className={styles.bucketControls}>
     <span className={styles.zoomLevel}>Bucket</span>
-    <button type="button" className={styles.zoomButton} aria-label="Smaller buckets"
-      onClick={() => setBucketSize((s) => Math.max(1, s - 1))} disabled={bucketSize <= 1}>−</button>
-    <span className={styles.zoomLevel}>{bucketSize}</span>
-    <button type="button" className={styles.zoomButton} aria-label="Larger buckets"
-      onClick={() => setBucketSize((s) => Math.min(BUCKET_MAX, s + 1))} disabled={bucketSize >= BUCKET_MAX}>+</button>
-    <button type="button" className={`${styles.zoomButton} ${styles.unitButton}`}
-      onClick={() => setBucketUnit((u) => (u === 'years' ? 'months' : 'years'))}>{bucketUnit}</button>
+    <input
+    name="timeline_bucketsize"
+      id="timeline_bucketsize"
+      type="text"
+      inputMode="numeric"
+      className={styles.bucketInput}
+      value={bucketText}
+      aria-label="Bucket size"
+      onChange={(e) => {
+        const t = e.target.value.replace(/\D/g, '').slice(0, 2);
+        setBucketText(t);
+        const n = parseInt(t, 10);
+        if (n >= 1) setBucketSize(Math.min(BUCKET_MAX, n));
+      }}
+      onBlur={() => setBucketText(String(bucketSize))}
+      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+    />
+    <UnitSelect value={bucketUnit} onChange={setBucketUnit} />
   </div>
 )}
         <div className={`${styles.contentbox} ${styles.contentboxhorizontal}`}>

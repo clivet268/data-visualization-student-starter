@@ -9,7 +9,7 @@ import styles from './spillover.module.css';
 
 interface SiteInfo {
   selectedSites: Map<string, SiteData>;
-  currentSelectedSite: SiteData | null;
+  summarySite: SiteData | null;
   compareMode: boolean;
   setCompareMode: (value: boolean) => void;
   clearSelection: () => void;
@@ -28,16 +28,16 @@ interface SiteInfo {
 }
 
 export function Spilloverlay({
-  selectedSites, currentSelectedSite, compareMode, setCompareMode, clearSelection, focusSites, conLoading,
+  selectedSites, summarySite, compareMode, setCompareMode, clearSelection, focusSites, conLoading,
   pinsActive, setPinsActive, pinCount, clearPins, statusFilter, setStatusFilter, timeFilter, setTimeFilter, removeLastPin, outlinedAcres
 }: SiteInfo) {
   const [uiHidden, setUiHidden] = useState(false);
 
-  const canFocus = selectedSites.size > 0 || currentSelectedSite !== null;
+  const canFocus = selectedSites.size > 0 || summarySite !== null;
   // the multi-selection wins; otherwise focus the site open in the summary
   const focusSelected = () =>
     focusSites(
-      selectedSites.size > 0 ? [...selectedSites.values()] : currentSelectedSite ? [currentSelectedSite] : []
+      selectedSites.size > 0 ? [...selectedSites.values()] : summarySite ? [summarySite] : []
     );
 
   return (
@@ -72,7 +72,7 @@ export function Spilloverlay({
     >
       {uiHidden ? '▼' : '▲'}
     </button>
-    <SiteSummary selectedSite={currentSelectedSite} conLoading={conLoading}/>
+    <SiteSummary selectedSite={summarySite} conLoading={conLoading}/>
     <SitesStatistics
   selectedSites={selectedSites}
   compareMode={compareMode}

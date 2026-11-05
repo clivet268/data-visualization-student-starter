@@ -3,22 +3,33 @@ import { MapBase, type FocusRequest } from './mapbase';
 import { Spilloverlay } from './Spilloverlay';
 import { SiteData } from './Polygons';
 import { ALL_STATUSES, type TimeKey } from './filters';
-import { pinStack, pinAreaAcres, type Pin } from './geo';
+import { pinStack, pinGroupsAcres, dropPin, type Pin } from './geo';
 
 
 export function Spillover() {
   const [selectedSites, setSelectedSites] = useState<Map<string, SiteData>>(new Map());
   const [currentSelectedSite, setcurrentSelectedSite] = useState<SiteData | null>(null);
+  const [hoverSite, setHoverSite] = useState<SiteData | null>(null); // temporary preview while the mouse is over a site
+  const [autoSite, setAutoSite] = useState<SiteData | null>(null); // visible site nearest the map centre
   const [compareMode, setCompareMode] = useState(false);
   const [conLoading, setconLoading] = useState<boolean>(false);
   const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set(ALL_STATUSES));
   const [timeFilter, setTimeFilter] = useState<TimeKey>('any');
-  const [pins, setPins] = useState<Pin[]>([]);
+  const [pinGroups, setPinGroups] = useState<Pin[][]>([]);
+  const [activeGroup, setActiveGroup] = useState(0);
   const [pinsActive, setPinsActive] = useState(false);
-  
+
   // ids that the pin area added, so they can be removed again when the area moves off them
   const pinAdded = useRef<Set<string>>(new Set());
+
+  // what the summary box shows: the hovered site, else the chosen one, else the one nearest the map centre
+  const summarySite = hoverSite ?? currentSelectedSite ?? autoSite;
+  // leaving a site puts back whatever was showing; if nothing was, the hovered site stays
+  const endHover = () => {
+    if (hoverSite && !currentSelectedSite && !autoSite) setcurrentSelectedSite(hoverSite);
+    setHoverSite(null);
+  };
 
   const toggleSelectedSite = (site: SiteData) => {
     const id = site.siteProperties.EPA_ID;
@@ -45,22 +56,37 @@ export function Spillover() {
   };
 
   const clearSelection = () => { setSelectedSites(new Map()); pinAdded.current.clear(); };
+
+  const groupsRef = useRef(pinGroups);
+  groupsRef.current = pinGroups;
+  const activeRef = useRef(activeGroup);
+  activeRef.current = activeGroup;
+
   // clearing pins keeps whatever they selected, as ordinary selections
-  const pinsRef = useRef(pins);
-pinsRef.current = pins;
+  const clearPins = () => { pinAdded.current.clear(); pinStack.length = 0; setPinGroups([]); setActiveGroup(0); };
 
-const clearPins = () => { pinAdded.current.clear(); pinStack.length = 0; setPins([]); };
+  // removes the most recently placed pin that still exists (in any group), falling back to the last pin of the last group
+  const removeLastPin = () => {
+    const gs = groupsRef.current;
+    let gi = -1;
+    let i = -1;
+    while (gi < 0 && pinStack.length) {
+      const p = pinStack.pop()!;
+      gi = gs.findIndex((g) => g.includes(p));
+      if (gi >= 0) i = gs[gi].indexOf(p);
+    }
+    if (gi < 0) {
+      gi = gs.length - 1;
+      i = gi >= 0 ? gs[gi].length - 1 : -1;
+    }
+    if (gi < 0) return;
+    const r = dropPin(gs, activeRef.current, gi, i);
+    setPinGroups(r.groups);
+    setActiveGroup(r.active);
+  };
 
-// removes the most recently placed pin that still exists, falling back to the last in the list
-const removeLastPin = () => {
-  const cur = pinsRef.current;
-  let idx = -1;
-  while (idx < 0 && pinStack.length) idx = cur.indexOf(pinStack.pop()!);
-  if (idx < 0) idx = cur.length - 1;
-  if (idx >= 0) setPins(cur.filter((_, j) => j !== idx));
-};
-
-const outlinedAcres = pinAreaAcres(pins);
+  const pinCount = pinGroups.reduce((n, g) => n + g.length, 0);
+  const outlinedAcres = pinGroupsAcres(pinGroups);
 
   const focusSites = (sites: SiteData[]) => setFocusRequest({ sites, nonce: Date.now() });
 
@@ -75,15 +101,16 @@ const outlinedAcres = pinAreaAcres(pins);
         <Spilloverlay
           conLoading={conLoading}
           selectedSites={selectedSites}
-          currentSelectedSite={currentSelectedSite}
+          summarySite={summarySite}
           compareMode={compareMode}
           setCompareMode={setCompareMode}
           clearSelection={clearSelection}
           focusSites={focusSites}
           pinsActive={pinsActive}
           setPinsActive={setPinsActive}
-          pinCount={pins.length}
+          pinCount={pinCount}
           clearPins={clearPins}
+          removeLastPin={removeLastPin}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
           timeFilter={timeFilter}
@@ -102,10 +129,15 @@ const outlinedAcres = pinAreaAcres(pins);
           focusRequest={focusRequest}
           statusFilter={statusFilter}
           timeFilter={timeFilter}
-          pins={pins}
-          setPins={setPins}
+          pinGroups={pinGroups}
+          setPinGroups={setPinGroups}
+          activeGroup={activeGroup}
+          setActiveGroup={setActiveGroup}
           pinsActive={pinsActive}
           onPinSelection={applyPinSelection}
+          onHoverSite={setHoverSite}
+          onHoverEnd={endHover}
+          setAutoSite={setAutoSite}
         />
       </div>
     </div>

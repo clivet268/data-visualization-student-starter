@@ -5,6 +5,7 @@
   --pacific-blue: #62b6cbff;
   --yale-blue: #1b4965ff;
   --pale-sky: #cae9ffff;
+  --more-pale-sky: #e0eaffff;
   --fresh-sky: #5fa8d3ff;
   --steel-blue: #7399b2ff;
   --jet-black: #0c2331ff;
@@ -47,6 +48,8 @@
   --tip-line: var(--yale-blue);
   --tip-line-halo: #ffffffe6;
   --count-bg: #ffffff26;
+  --light-text: var(--more-pale-sky)
+  
 }
 
 .spilloverlay {
@@ -282,8 +285,8 @@
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
-  color: var(--pale-sky);
-  background-color: var(--yale-blue);
+  color: var(--light-text);
+  background-color: var(--jet-black);
   border-radius: 20px 2px 20px 2px;
   border-bottom: var(--windowborder) solid var(--fresh-sky);
   border-right: var(--windowborder) solid var(--fresh-sky);
@@ -294,7 +297,7 @@
   margin-top: 2px;
   font-size: 0.8rem;
   font-weight: 400;
-  color: var(--frozen-water);
+  color: var(--light-text);
 }
 
 /* scrolling area under the title */
@@ -318,15 +321,15 @@
   padding: 6px 10px;
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--pale-sky);
-  background-color: rgb(80, 118, 143);
+  color: var(--light-text);
+  background-color: var(--jet-black);
   justify-content: center;
 }
 .contentboxvalue {
   width: 100%;
   box-sizing: border-box;
   padding: 6px 10px;
-  background-color: rgb(110, 148, 173);
+  background-color: rgb(156, 185, 204);
 }
 
 /* label/value rows inside a .contentboxvalue */
@@ -362,7 +365,7 @@
   padding: 1px 8px;
   border-radius: 999px;
   background: var(--yale-blue);
-  color: var(--pale-sky);
+  color: var(--light-text);
   font-size: 0.85rem;
 }
 
@@ -393,7 +396,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   padding: 6px 16px;
-  color: var(--pale-sky);
+  color: var(--light-text);
   background-color: var(--yale-blue);
   border: none;
   border-bottom: 3px solid var(--fresh-sky);
@@ -460,7 +463,7 @@
     font-size: 1.1rem;
   font-weight: 600;
   padding: 6px calc(16px * var(--tb-scale, 1));
-  color: var(--pale-sky);
+  color: var(--light-text);
   background: none;
   border: none;
   border-radius: 0;
@@ -473,7 +476,7 @@
 .groupButton:disabled { opacity: 0.45; cursor: not-allowed; }
 /*TODO double check -268*/
 .groupButton.groupButtonActive,
-.groupButton.groupButtonActive:hover:not(:disabled) { background-color: var(--group-btn-hover); }
+.groupButton.groupButtonActive:hover:not(:disabled) { background-color: var(--tab-bg-active); }
 
 .countSlot {
   display: inline-flex;
@@ -765,6 +768,45 @@
   stroke-width: 2;
 }
 
+
+/* ---------- bucket entry + unit dropdown ---------- */
+.bucketControls { display: flex; align-items: center; gap: 6px; }
+.bucketInput {
+  box-sizing: border-box;
+  width: 3.2em;
+  padding: 3px 4px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--light-text);
+  background: var(--tab-bg);
+  
+    border: none;
+    border-bottom: 3px solid var(--fresh-sky);
+  border-radius: 10px 0 10px 0;
+}
+.bucketInput:focus { outline: 2px solid var(--tab-bg-hover); outline-offset: 1px; }
+
+.unitOption {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  width: 100%;
+  text-transform: capitalize;
+}
+.unitOptionActive { background: var(--option-active-bg); font-weight: 700; }
+
+/* ---------- link styled as a button ---------- */
+.smallButton { font-size: 0.9rem; padding: 4px 14px; }
+.panel a.titleButton {
+  color: var(--light-text);
+  text-decoration: none;
+  justify-self: start;
+}
+.panel a.titleButton:hover { background-color: var(--blue-bell); }
 /* pin-placing cursor; !important because Leaflet sets its own cursors on child elements */
 /*.pinCursor,
 .pinCursor :global(.leaflet-pane),

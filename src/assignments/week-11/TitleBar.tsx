@@ -96,6 +96,12 @@ export function TitleBar({
       <div className={styles.titleControls} ref={controlsRef}>
         <div className={styles.titleGroup}>
           <CompareMode compareMode={compareMode} setCompareMode={setCompareMode} />
+          <button type="button" className={styles.groupButton} onClick={clearSelection} disabled={selectedCount === 0}>
+            Clear selection <Count n={selectedCount} />
+          </button>
+        </div>
+
+        <div className={styles.titleGroup}>
           <button
             type="button"
             aria-pressed={pinsActive}
@@ -105,19 +111,13 @@ export function TitleBar({
           >
             Pins <Count n={pinCount} />
           </button>
+          <button type="button" className={styles.groupButton} onClick={removeLastPin} disabled={pinCount === 0}>
+            Remove last pin
+          </button>
+          <button type="button" className={styles.groupButton} onClick={clearPins} disabled={pinCount === 0}>
+            Clear pins
+          </button>
         </div>
-
-        <div className={styles.titleGroup}>
-  <button type="button" className={styles.groupButton} onClick={clearSelection} disabled={selectedCount === 0}>
-    Clear selection <Count n={selectedCount} />
-  </button>
-  <button type="button" className={styles.groupButton} onClick={removeLastPin} disabled={pinCount === 0}>
-    Remove last pin
-  </button>
-  <button type="button" className={styles.groupButton} onClick={clearPins} disabled={pinCount === 0}>
-    Clear pins
-  </button>
-</div>
 
         <button type="button" className={styles.titleButton} onClick={focusSelected} disabled={!canFocus}>
           Focus selected event(s)

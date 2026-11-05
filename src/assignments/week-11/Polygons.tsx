@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { GeoJSON } from 'react-leaflet';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { GeoJSON, useMap } from 'react-leaflet';
 import type { FeatureCollection, Feature, Geometry } from 'geojson';
 import type { PathOptions } from 'leaflet';
 
 import type { FocusRequest } from './mapbase';
 import { siteMatchesFilters, type TimeKey } from './filters';
-import { fullyEnclosed, type Pin } from './geo';
+import { bboxOf, fullyEnclosed, nearestBox, type BBox, type Pin } from './geo';
 interface SiteProperties {
   FID: number;
   REGION_COD: number;
@@ -122,9 +122,12 @@ interface MapInteractivity {
   focusRequest: FocusRequest | null;
   statusFilter: Set<string>;
   timeFilter: TimeKey;
-  pins: Pin[];
+  pinGroups: Pin[][];
   pinsActive: boolean;
   onPinSelection: (enclosed: SiteData[]) => void;
+  onHoverSite: (site: SiteData) => void;
+  onHoverEnd: () => void;
+  setAutoSite: (site: SiteData | null) => void;
 }
 const baseUrl = import.meta.env.BASE_URL;
 
@@ -146,6 +149,16 @@ const loading = new Set<string>(); // EPA ids with a request in flight
 const siteDataCache: Map<string, SiteData> = new Map();
 // number of EPA requests currently in flight; conLoading is true while this is > 0
 let inFlight = 0;
+// the cached SiteData for a feature, created on first use
+function siteFor(feature: Feature<Geometry, any>): SiteData {
+  const id: string = feature.properties.EPA_ID;
+  let s = siteDataCache.get(id);
+  if (!s) {
+    s = new SiteData(feature);
+    siteDataCache.set(id, s);
+  }
+  return s;
+}
 // "F" = Final NPL. Everything else (proposed, deleted, not on NPL, missing) is grey.
 const styleSite = (feature?: Feature<Geometry, any>): PathOptions => {
   if (feature?.properties?.NPL_STATUS === 'F') {
@@ -188,8 +201,10 @@ async function fetchEpaSummary(epaId: string, signal: AbortSignal): Promise<Site
 
 export function Polygons({
   setcurrentSelectedSite, setconLoading, compareMode, selectedSites, toggleSelectedSite, currentSelectedSite,
-  focusRequest, statusFilter, timeFilter, pins, pinsActive, onPinSelection,
+  focusRequest, statusFilter, timeFilter, pinGroups, pinsActive, onPinSelection,
+  onHoverSite, onHoverEnd, setAutoSite,
 }: MapInteractivity) {
+  const map = useMap();
   const [geoData, setGeoData] = useState<FeatureCollection | null>(null);
   const [flash, setFlash] = useState<{ ids: Set<string>; on: boolean } | null>(null);
 
@@ -200,6 +215,13 @@ export function Polygons({
   pinModeRef.current = pinsActive;
   const filtersRef = useRef({ statusFilter, timeFilter });
   filtersRef.current = { statusFilter, timeFilter };
+  const hoverRef = useRef({ onHoverSite, onHoverEnd });
+  hoverRef.current = { onHoverSite, onHoverEnd };
+  const hoverTimer = useRef<number | undefined>(undefined);
+  const boxes = useMemo<(BBox | null)[]>(
+    () => (geoData ? geoData.features.map((f) => (f.geometry ? bboxOf(f.geometry) : null)) : []),
+    [geoData]
+  );
 
   const currentId = currentSelectedSite?.siteProperties.EPA_ID;
 
@@ -262,12 +284,13 @@ export function Polygons({
   useEffect(() => {
     if (!geoData || !compareMode || !pinsActive) return;
     const enclosed: SiteData[] = [];
-    if (pins.length >= 3) {
+    const areas = pinGroups.filter((g) => g.length >= 3);
+    if (areas.length > 0) {
       for (const f of geoData.features) {
         const epaId = f.properties?.EPA_ID;
         if (!epaId || !f.geometry) continue;
         if (!siteMatchesFilters(f.properties, statusFilter, timeFilter)) continue;
-        if (!fullyEnclosed(f.geometry, pins)) continue;
+        if (!areas.some((g) => fullyEnclosed(f.geometry, g))) continue;
         let s = siteDataCache.get(epaId);
         if (!s) {
           s = new SiteData(f);
@@ -281,32 +304,68 @@ export function Polygons({
       if (s.siteContaminantList === undefined) loadSite(s.siteProperties.EPA_ID);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geoData, pins, pinsActive, compareMode, statusFilter, timeFilter]);
+  }, [geoData, pinGroups, pinsActive, compareMode, statusFilter, timeFilter]);
+
+  // the summary box falls back to the visible site nearest the map centre (none in view = empty box)
+  useEffect(() => {
+    if (!geoData) return;
+    const update = () => {
+      const { statusFilter: sf, timeFilter: tf } = filtersRef.current;
+      const c = map.getCenter();
+      const v = map.getBounds();
+      const idx = nearestBox(boxes, c.lat, c.lng, (i) => {
+        const b = boxes[i]!;
+        return (
+          b[0] <= v.getEast() && b[2] >= v.getWest() && b[1] <= v.getNorth() && b[3] >= v.getSouth() &&
+          siteMatchesFilters(geoData.features[i].properties, sf, tf)
+        );
+      });
+      if (idx < 0) {
+        setAutoSite(null);
+        return;
+      }
+      const site = siteFor(geoData.features[idx]);
+      setAutoSite(site);
+      if (site.siteContaminantList === undefined) loadSite(site.siteProperties.EPA_ID);
+    };
+    update();
+    map.on('moveend', update);
+    return () => {
+      map.off('moveend', update);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoData, boxes, map, statusFilter, timeFilter]);
 
   if (geoData === null) {
     return null;
   }
 
   const handleSelectSite = (feature: Feature<Geometry, any>, layer: any) => {
+    const visible = () => {
+      const { statusFilter: sf, timeFilter: tf } = filtersRef.current;
+      return siteMatchesFilters(feature.properties, sf, tf);
+    };
+    const pinMode = () => compareRef.current && pinModeRef.current; // pin mode: clicks drop pins instead
+
     layer.on({
       click: () => {
-        const { statusFilter: sf, timeFilter: tf } = filtersRef.current;
-        if (!siteMatchesFilters(feature.properties, sf, tf)) return; // hidden by a filter
-        if (compareRef.current && pinModeRef.current) return; // pin mode: clicks drop pins instead
-
-        const s: SiteData = new SiteData(feature);
-        const epaId: string = s.siteProperties.EPA_ID;
-
-        let st: SiteData | undefined = siteDataCache.get(epaId);
-        if (!st) {
-          siteDataCache.set(epaId, s);
-          st = s;
-        }
-
+        if (!visible() || pinMode()) return;
+        const st = siteFor(feature);
         if (compareRef.current) toggleSelectedSite(st);
         else setcurrentSelectedSite(st);
-
-        loadSite(epaId);
+        loadSite(st.siteProperties.EPA_ID);
+      },
+      // hovering previews the site in the summary box; the EPA request waits until the mouse rests
+      mouseover: () => {
+        if (!visible() || pinMode()) return;
+        const st = siteFor(feature);
+        hoverRef.current.onHoverSite(st);
+        window.clearTimeout(hoverTimer.current);
+        hoverTimer.current = window.setTimeout(() => loadSite(st.siteProperties.EPA_ID), 200);
+      },
+      mouseout: () => {
+        window.clearTimeout(hoverTimer.current);
+        hoverRef.current.onHoverEnd();
       },
     });
   };

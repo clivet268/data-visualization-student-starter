@@ -22,10 +22,15 @@ interface MapInteractivity {
   focusRequest: FocusRequest | null;
   statusFilter: Set<string>;
   timeFilter: TimeKey;
-  pins: Pin[];
-  setPins: (pins: Pin[]) => void;
+  pinGroups: Pin[][];
+  setPinGroups: (groups: Pin[][]) => void;
+  activeGroup: number;
+  setActiveGroup: (i: number) => void;
   pinsActive: boolean;
   onPinSelection: (enclosed: SiteData[]) => void;
+  onHoverSite: (site: SiteData) => void;
+  onHoverEnd: () => void;
+  setAutoSite: (site: SiteData | null) => void;
 }
 
 // zooms so the requested sites fill the middle 60% of the screen (20% padding per side)
@@ -52,7 +57,8 @@ function MapController({ focusRequest}: { focusRequest: FocusRequest | null}) {
 
 export function MapBase({
   setcurrentSelectedSite, setconLoading, compareMode, selectedSites, toggleSelectedSite, currentSelectedSite,
-  focusRequest, statusFilter, timeFilter, pins, setPins, pinsActive, onPinSelection,
+  focusRequest, statusFilter, timeFilter, pinGroups, setPinGroups, activeGroup, setActiveGroup, pinsActive, onPinSelection,
+  onHoverSite, onHoverEnd, setAutoSite,
 }: MapInteractivity) {
   return (
     <MapContainer
@@ -76,11 +82,20 @@ export function MapBase({
         focusRequest={focusRequest}
         statusFilter={statusFilter}
         timeFilter={timeFilter}
-        pins={pins}
+        pinGroups={pinGroups}
         pinsActive={pinsActive}
         onPinSelection={onPinSelection}
+        onHoverSite={onHoverSite}
+        onHoverEnd={onHoverEnd}
+        setAutoSite={setAutoSite}
       />
-      <PinLayer active={compareMode && pinsActive} pins={pins} setPins={setPins} />
+      <PinLayer
+        active={compareMode && pinsActive}
+        groups={pinGroups}
+        setGroups={setPinGroups}
+        activeGroup={activeGroup}
+        setActiveGroup={setActiveGroup}
+      />
       <MapController focusRequest={focusRequest} />
     </MapContainer>
   );

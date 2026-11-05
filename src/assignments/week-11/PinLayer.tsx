@@ -1,11 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { Marker, Polygon, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import styles from './spillover.module.css';
-import { pinStack, type Pin } from './geo';
+import { dropPin, pinStack, type Pin } from './geo';
 const DRAGGING_CLASS = 'spillover-pin-dragging';
 
 const pinIcon = L.divIcon({ className: styles.pin, iconSize: [18, 18], iconAnchor: [9, 9] });
+const pinIconInactive = L.divIcon({
+  className: `${styles.pin} ${styles.pinInactive}`,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
 const cssVar = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 const PIN_MODE_CLASS = 'spillover-pin-mode'; // plain global class on purpose, not a CSS-module one
@@ -48,7 +53,6 @@ function insertPin(map: L.Map, list: Pin[], at: L.LatLng): { list: Pin[]; pin: P
 
   if (best >= 0) return { list: [...list.slice(0, best + 1), p, ...list.slice(best + 1)], pin: p };
 
-
   // no clean insertion exists: re-order every pin by angle around their center
   const all: { pin: Pin; pt: Pt }[] = [...list, p].map((pin) => ({ pin, pt: proj(pin) }));
   const cx = all.reduce((s, o) => s + o.pt.x, 0) / all.length;
@@ -59,29 +63,33 @@ function insertPin(map: L.Map, list: Pin[], at: L.LatLng): { list: Pin[]; pin: P
 
 interface PinLayerProps {
   active: boolean;
-  pins: Pin[];
-  setPins: (pins: Pin[]) => void;
+  groups: Pin[][];
+  setGroups: (groups: Pin[][]) => void;
+  activeGroup: number;
+  setActiveGroup: (i: number) => void;
 }
-
-export function PinLayer({ active, pins, setPins }: PinLayerProps) {
-  const map = useMap();
-  const [draft, setDraft] = useState<Pin[] | null>(null); // live positions while dragging
-  const pinsRef = useRef(pins);
-  pinsRef.current = pins;
 
 // hotspot = the pixel in the image that counts as the click point.
 // Lower x moves the image right, lower y moves it down.
 const CURSOR_HOTSPOT = { x: 16, y: 32 };
 
-useEffect(() => {
-  let el = document.getElementById(STYLE_ID);
-  if (!el) {
-    el = document.createElement('style');
-    el.id = STYLE_ID;
-    document.head.appendChild(el);
-  }
-  const cursor = `url("${import.meta.env.BASE_URL}spillovercursor.png") ${CURSOR_HOTSPOT.x} ${CURSOR_HOTSPOT.y}, crosshair`;
-  el.textContent = `
+export function PinLayer({ active, groups, setGroups, activeGroup, setActiveGroup }: PinLayerProps) {
+  const map = useMap();
+  const [draft, setDraft] = useState<Pin[][] | null>(null); // live positions while dragging
+  const groupsRef = useRef(groups);
+  groupsRef.current = groups;
+  const activeRef = useRef(activeGroup);
+  activeRef.current = activeGroup;
+
+  useEffect(() => {
+    let el = document.getElementById(STYLE_ID);
+    if (!el) {
+      el = document.createElement('style');
+      el.id = STYLE_ID;
+      document.head.appendChild(el);
+    }
+    const cursor = `url("${import.meta.env.BASE_URL}spillovercursor.png") ${CURSOR_HOTSPOT.x} ${CURSOR_HOTSPOT.y}, crosshair`;
+    el.textContent = `
     /* Apply custom cursor and hotspot ONLY to the parent layer container */
     .${PIN_MODE_CLASS} { 
       cursor: ${cursor} !important; 
@@ -96,62 +104,125 @@ useEffect(() => {
     .${DRAGGING_CLASS}.${DRAGGING_CLASS}.${DRAGGING_CLASS},
     .${DRAGGING_CLASS}.${DRAGGING_CLASS}.${DRAGGING_CLASS} * { cursor: grabbing !important; }
   `;
-}, []);
+  }, []);
 
   // class goes straight onto Leaflet's container (setting className via React would wipe Leaflet's own)
   useEffect(() => {
-  const el = map.getContainer();
-  el.classList.toggle(PIN_MODE_CLASS, active);
-  return () => {
-    el.classList.remove(PIN_MODE_CLASS);
-    document.documentElement.classList.remove(DRAGGING_CLASS);
-  };
-}, [map, active]);
+    const el = map.getContainer();
+    el.classList.toggle(PIN_MODE_CLASS, active);
+    return () => {
+      el.classList.remove(PIN_MODE_CLASS);
+      document.documentElement.classList.remove(DRAGGING_CLASS);
+    };
+  }, [map, active]);
+
+  // shift+click would otherwise start Leaflet's shift-drag box zoom
+  useEffect(() => {
+    if (!active) return;
+    map.boxZoom.disable();
+    return () => {
+      map.boxZoom.enable();
+    };
+  }, [map, active]);
 
   useMapEvents({
     click: (e) => {
-  if (!active) return;
-  const { list, pin } = insertPin(map, pinsRef.current, e.latlng);
-  pinStack.push(pin);
-  setPins(list);
-},
+      if (!active) return;
+      const oe = e.originalEvent;
+      if (oe.ctrlKey || oe.metaKey) return; // ctrl/cmd-click switches the active group instead
+
+      const all = groupsRef.current;
+      if (oe.shiftKey || all.length === 0) {
+        // shift starts a brand new group
+        const pin: Pin = [e.latlng.lat, e.latlng.lng];
+        pinStack.push(pin);
+        setGroups([...all, [pin]]);
+        setActiveGroup(all.length);
+        return;
+      }
+      const gi = Math.min(activeRef.current, all.length - 1);
+      const { list, pin } = insertPin(map, all[gi], e.latlng);
+      pinStack.push(pin);
+      setGroups(all.map((g, k) => (k === gi ? list : g)));
+      setActiveGroup(gi);
+    },
   });
 
   if (!active) return null;
 
-  const shown = draft ?? pins;
-  const region = cssVar('--pin-region');
-  const path = { color: region, fillColor: region, fillOpacity: 0.12, weight: 2, dashArray: '6 6', interactive: false };
-  const moved = (i: number, e: L.LeafletEvent): Pin[] => {
+  const shown = draft ?? groups;
+  const act = Math.min(activeGroup, shown.length - 1);
+  const shape = (color: string, dim: boolean): L.PathOptions => ({
+    color,
+    fillColor: color,
+    fillOpacity: dim ? 0.06 : 0.12,
+    weight: 2,
+    dashArray: dim ? '2 8' : '6 6',
+  });
+  const activePath = shape(cssVar('--pin-region'), false);
+  const inactivePath = shape(cssVar('--pin-region-inactive'), true);
+
+  const moved = (gi: number, i: number, e: L.LeafletEvent): Pin[][] => {
     const ll = (e.target as L.Marker).getLatLng();
-    return pinsRef.current.map((p, j) => (j === i ? ([ll.lat, ll.lng] as Pin) : p));
+    return groupsRef.current.map((g, a) =>
+      a === gi ? g.map((p, j) => (j === i ? ([ll.lat, ll.lng] as Pin) : p)) : g
+    );
   };
 
   return (
     <>
-      {shown.length >= 3 && <Polygon positions={shown} pathOptions={path} />}
-      {shown.length === 2 && <Polyline positions={shown} pathOptions={path} />}
-      {shown.map((p, i) => (
-        <Marker
-          key={i}
-          position={p}
-          icon={pinIcon}
-          draggable
-          eventHandlers={{
-  dragstart: () => document.documentElement.classList.add(DRAGGING_CLASS),
-  drag: (e) => setDraft(moved(i, e)),
-  dragend: (e) => {
-    document.documentElement.classList.remove(DRAGGING_CLASS);
-    const next = moved(i, e);
-    const k = pinStack.indexOf(pinsRef.current[i]);
-    if (k >= 0) pinStack[k] = next[i]; // keep its place in the undo order after being dragged
-    setPins(next);
-    setDraft(null);
-  },
-  contextmenu: () => setPins(pinsRef.current.filter((_, j) => j !== i)),
-}}
-        />
-      ))}
+      {shown.map((grp, gi) => {
+        const isActive = gi === act;
+        // ctrl/cmd-click anywhere on a group's outline, line or pins makes it the active group
+        const activate = (e: L.LeafletMouseEvent) => {
+          const oe = e.originalEvent;
+          if (!(oe.ctrlKey || oe.metaKey)) return false;
+          oe.preventDefault(); // on a Mac, ctrl+click also raises the context menu
+          setActiveGroup(gi);
+          return true;
+        };
+        const path = isActive ? activePath : inactivePath;
+        return (
+          <Fragment key={gi}>
+            {grp.length >= 3 && (
+              <Polygon positions={grp} pathOptions={path} eventHandlers={{ click: activate, contextmenu: activate }} />
+            )}
+            {grp.length === 2 && (
+              <Polyline positions={grp} pathOptions={path} eventHandlers={{ click: activate, contextmenu: activate }} />
+            )}
+            {grp.map((p, i) => (
+              <Marker
+                key={`${gi}-${i}`}
+                position={p}
+                icon={isActive ? pinIcon : pinIconInactive}
+                draggable
+                eventHandlers={{
+                  click: activate,
+                  dragstart: () => {
+                    document.documentElement.classList.add(DRAGGING_CLASS);
+                    setActiveGroup(gi);
+                  },
+                  drag: (e) => setDraft(moved(gi, i, e)),
+                  dragend: (e) => {
+                    document.documentElement.classList.remove(DRAGGING_CLASS);
+                    const next = moved(gi, i, e);
+                    const k = pinStack.indexOf(groupsRef.current[gi][i]);
+                    if (k >= 0) pinStack[k] = next[gi][i]; // keep its place in the undo order after being dragged
+                    setGroups(next);
+                    setDraft(null);
+                  },
+                  contextmenu: (e) => {
+                    if (activate(e)) return; // ctrl-click on a Mac arrives here
+                    const r = dropPin(groupsRef.current, activeRef.current, gi, i);
+                    setGroups(r.groups);
+                    setActiveGroup(r.active);
+                  },
+                }}
+              />
+            ))}
+          </Fragment>
+        );
+      })}
     </>
   );
 }

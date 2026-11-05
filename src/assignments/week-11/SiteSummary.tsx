@@ -78,7 +78,8 @@ export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {
             <div className={styles.contentrow}>
               <span className={styles.contentlabel}>NPL status</span>
               <span className={styles.contentdata}>
-                <span className={styles.badge}>{status}</span>
+                {/*<span className={styles.badge}>{status}</span>*/}
+                {status}
               </span>
             </div>
             <div className={styles.contentrow}>
@@ -93,9 +94,17 @@ export function SiteSummary({ selectedSite, conLoading }: SiteInfo) {
             )}
             <div className={styles.contentrow}>
                 <span className={styles.contentlabel}>EPA Site Page</span>
-              <span className={styles.contentdata}><a href={'https://' + siteUrl} target="_blank" rel="noopener noreferrer">
-                View EPA site page →
-              </a></span>
+              <span className={styles.contentdata}>
+                {siteUrl && (
+  <a
+    href={"https://" + siteUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    className={`${styles.titleButton} ${styles.smallButton}`}
+  >
+    View EPA site page →
+  </a>
+)}</span>
             </div>
           </div>
         </div>

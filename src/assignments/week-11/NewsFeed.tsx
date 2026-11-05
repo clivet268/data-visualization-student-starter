@@ -1,17 +1,79 @@
 import { useEffect, useState } from 'react';
 import styles from './spillover.module.css';
 import { SlidePanel } from './SlidePanel';
-import { loadNews, type NewsItem } from './news';
+import { loadNews, type NewsData, type NewsItem } from './news';
+
+const PREVIEW = 2; // what a collapsed section shows
+const STEP = 10; // each expand reveals this many more
+
+const fmtDate = (ms: number) =>
+  new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+interface SectionProps {
+  title: string;
+  items: NewsItem[];
+  loading: boolean;
+  initial: number; // how many items show before anything is clicked
+}
+
+function FeedSection({ title, items, loading, initial }: SectionProps) {
+  const [shown, setShown] = useState(initial);
+  const canMore = shown < items.length;
+  const canCollapse = shown > PREVIEW;
+
+  return (
+    <div className={styles.contentbox}>
+      <div className={styles.contentboxname}>{title}</div>
+      <div className={styles.contentboxvalue}>
+        {loading && <div className={styles.muted}>Loading…</div>}
+        {!loading && items.length === 0 && <div className={styles.muted}>Nothing available right now</div>}
+        <ul className={styles.contentlist}>
+          {items.slice(0, shown).map((it) => (
+            <li key={it.link} className={styles.contentlistitem}>
+              <a href={it.link} target="_blank" rel="noreferrer">
+                {it.title}
+              </a>
+              {it.date !== null && <div className={styles.muted}>{fmtDate(it.date)}</div>}
+            </li>
+          ))}
+        </ul>
+      </div>
+      {(canMore || canCollapse) && (
+        <div className={styles.contentboxvalue}>
+          <div className={styles.titleGroup}>
+            {canMore && (
+              <button type="button" className={styles.groupButton} onClick={() => setShown(shown + STEP)}>
+                Show {Math.min(STEP, items.length - shown)} more
+              </button>
+            )}
+            {canCollapse && (
+              <button type="button" className={styles.groupButton} onClick={() => setShown(PREVIEW)}>
+                Collapse
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function NewsFeed() {
-  const [items, setItems] = useState<NewsItem[]>([]);
-  const [status, setStatus] = useState<'loading' | 'done' | 'error'>('loading');
+  const [data, setData] = useState<NewsData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
     loadNews()
-      .then((i) => alive && (setItems(i), setStatus('done')))
-      .catch(() => alive && setStatus('error'));
+      .then((d) => {
+        if (alive) setData(d);
+      })
+      .catch(() => {
+        /* sections show their empty message */
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
     return () => {
       alive = false;
     };
@@ -31,23 +93,8 @@ export function NewsFeed() {
           </div>
         </div>*/}
 
-        <div className={styles.contentbox}>
-          <div className={styles.contentboxname}>Latest publications</div>
-          <ul className={`${styles.contentboxvalue} ${styles.contentlist}`}>
-            {status === 'loading' && <li className={styles.muted}>Loading…</li>}
-            {status !== 'loading' && items.length === 0 && (
-              <li className={styles.muted}>News unavailable right now</li>
-            )}
-            {items.map((it) => (
-              <li key={it.link} className={styles.contentlistitem}>
-                <a href={it.link} target="_blank" rel="noreferrer">
-                  {it.title}
-                </a>{' '}
-                {it.id && <span className={styles.badge}>{it.id}</span>}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <FeedSection title="Latest events" items={data?.latest ?? []} loading={loading} initial={PREVIEW} />
+        <FeedSection title="Superfund" items={data?.superfund ?? []} loading={loading} initial={STEP} />
       </div>
     </SlidePanel>
   );
