@@ -743,7 +743,7 @@ useEffect(() => { setPinned([]); setHover(null); }, [tab, compareMode]);
             <TipRow label="Location" value={`${p.CITY_NAME}, ${p.STATE_CODE}`} />
             <TipRow label="Area" value={`${fmt(siteArea(site))} acres`} />
             <TipRow label="Updated" value={typeof p.LAST_CHANG === 'number' ? fmtDate(new Date(p.LAST_CHANG)) : '—'} />
-            <TipRow label="Contaminants" value={cons ? cons.length : '—'} />
+            {/*<TipRow label="Contaminants" value={cons ? cons.length : '—'} />*/}
             {tip.contaminant && <TipRow label="Contaminant" value={tip.contaminant} />}
             {tip.contaminant && <TipRow label="Media" value={hit?.media.join(', ') || '—'} />}
           </div>

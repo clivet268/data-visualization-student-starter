@@ -1,0 +1,25 @@
+==========
+make it so that there can be separate pin groups by holding shift while placing a new pin
+
+control clicking a pin selection area should switch control to that and you can begin adding pins to it again
+==========
+see if pin active color is distinct enough
+==========
+inspect the manually updated css file
+==========
+move pins sub-button to the remove last pin and clear pins button group and them move clear selection in its place, in the one with the compare mode sub button, basically swap pins and clear selection button
+==========
+
+      const top = grp.append('path').attr('fill', tint(fill)).style('display', i === b.sites.length - 1 ? null : 'none');
+
+the style()'s second arg has a No overload matches this call. error
+==========
+tooltip left side text when hovering over compare graph overruns onto the data text, solve it by making the left and right side not wrap text, and have their widths never go below the size of the text and have them be grid aligned. if grid alignment solves the issue just do that and dont overcomplicate that
+========== 
+inspect manually updated NewsFeed.tsx and news.tsx
+==========
+make it so the rss feed actually works, i dont know if i have the right one but the one i want gives an rss of all kinds of events, with an expandable latest events tab that shows the latest 2 spills, or any kind of hazardous event from all rss feeds and then a superfund feed that only shows the superfund events, and is expanded by default and make each expand get 10 more events from the rss feed and collapse collapses all
+==========
+make it so mousing over a makes it fill the selected event box temporarily, and returns it back to what it was before if one was present or keeps it if none were
+==========
+make the initial value for the selected screen the nearest one to center, make it so the default empty is there if none can be found, make it the selected event

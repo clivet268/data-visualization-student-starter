@@ -56,8 +56,8 @@ export function MapBase({
 }: MapInteractivity) {
   return (
     <MapContainer
-      center={[40.141046, -74.568632]}
-      zoom={13}
+      center={[40.21887105614659, -74.75486710687716]}
+      zoom={10}
       scrollWheelZoom={true}
       style={{ width: '100%', height: '100%', cursor: compareMode && pinsActive ? "url('/spillovercursor.png') 16 16, crosshair" : 'auto'}}
       preferCanvas={true}
