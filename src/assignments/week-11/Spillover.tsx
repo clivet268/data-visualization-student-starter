@@ -3,8 +3,7 @@ import { MapBase, type FocusRequest } from './mapbase';
 import { Spilloverlay } from './Spilloverlay';
 import { SiteData } from './Polygons';
 import { ALL_STATUSES, type TimeKey } from './filters';
-import type { Pin } from './geo';
-
+import { pinStack, pinAreaAcres, type Pin } from './geo';
 
 
 export function Spillover() {
@@ -18,7 +17,6 @@ export function Spillover() {
   const [pins, setPins] = useState<Pin[]>([]);
   const [pinsActive, setPinsActive] = useState(false);
   
-  const removeLastPin = () => setPins((p) => p.slice(0, -1));
   // ids that the pin area added, so they can be removed again when the area moves off them
   const pinAdded = useRef<Set<string>>(new Set());
 
@@ -48,7 +46,21 @@ export function Spillover() {
 
   const clearSelection = () => { setSelectedSites(new Map()); pinAdded.current.clear(); };
   // clearing pins keeps whatever they selected, as ordinary selections
-  const clearPins = () => { pinAdded.current.clear(); setPins([]); };
+  const pinsRef = useRef(pins);
+pinsRef.current = pins;
+
+const clearPins = () => { pinAdded.current.clear(); pinStack.length = 0; setPins([]); };
+
+// removes the most recently placed pin that still exists, falling back to the last in the list
+const removeLastPin = () => {
+  const cur = pinsRef.current;
+  let idx = -1;
+  while (idx < 0 && pinStack.length) idx = cur.indexOf(pinStack.pop()!);
+  if (idx < 0) idx = cur.length - 1;
+  if (idx >= 0) setPins(cur.filter((_, j) => j !== idx));
+};
+
+const outlinedAcres = pinAreaAcres(pins);
 
   const focusSites = (sites: SiteData[]) => setFocusRequest({ sites, nonce: Date.now() });
 
@@ -76,6 +88,7 @@ export function Spillover() {
           setStatusFilter={setStatusFilter}
           timeFilter={timeFilter}
           setTimeFilter={setTimeFilter}
+          outlinedAcres={outlinedAcres}
         />
       </div>
       <div style={{ width: '100%', height: '100%' }}>

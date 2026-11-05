@@ -43,7 +43,16 @@ function FilterMenu({ label, children }: { label: string; children: ReactNode })
     </div>
   );
 }
-
+// fixed-width slot, so the button never changes size; only the digits shrink as the count grows
+function Count({ n }: { n: number }) {
+  const digits = String(n).length;
+  const scale = digits <= 2 ? 1 : digits === 3 ? 0.78 : digits === 4 ? 0.6 : 0.5;
+  return (
+    <span className={styles.countSlot}>
+      <span style={{ fontSize: `${scale}em` }}>{n}</span>
+    </span>
+  );
+}
 export function TitleBar({
   compareMode, setCompareMode, selectedCount, clearSelection, focusSelected, canFocus,
   pinsActive, setPinsActive, pinCount, clearPins, statusFilter, setStatusFilter, timeFilter, setTimeFilter,removeLastPin
@@ -94,13 +103,13 @@ export function TitleBar({
             onClick={() => setPinsActive(!pinsActive)}
             className={`${styles.groupButton} ${pinsActive ? styles.groupButtonActive : ''}`}
           >
-            Pins{pinCount > 0 ? ` (${pinCount})` : ''}
+            Pins <Count n={pinCount} />
           </button>
         </div>
 
         <div className={styles.titleGroup}>
   <button type="button" className={styles.groupButton} onClick={clearSelection} disabled={selectedCount === 0}>
-    Clear selection{selectedCount > 0 ? ` (${selectedCount})` : ''}
+    Clear selection <Count n={selectedCount} />
   </button>
   <button type="button" className={styles.groupButton} onClick={removeLastPin} disabled={pinCount === 0}>
     Remove last pin

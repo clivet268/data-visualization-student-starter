@@ -39,6 +39,14 @@
   --pin-region: #ff5a36ff;
   --title-compact-scale: 0.67; /*haha 67*/
   --group-divider: #ffffff40;
+
+  --chart-dim-opacity: 0.3;
+  --chart-spot-glow: #ffffffe6;
+  --chart-transition: 0.15s;
+  --tip-z: 2000;
+  --tip-line: var(--yale-blue);
+  --tip-line-halo: #ffffffe6;
+  --count-bg: #ffffff26;
 }
 
 .spilloverlay {
@@ -754,6 +762,87 @@ padding: calc(6px * var(--tb-scale, 1)) calc(16px * var(--tb-scale, 1));
 }
 .hideTab:hover { background: var(--slide-toggle-bg-hover); }
 .hideTabHidden { top: 0; opacity: var(--ui-ghost-opacity); }
+
+/* ---------- chart hover focus ---------- */
+.chartSvg .seg { cursor: pointer; transition: opacity var(--chart-transition) ease; }
+.chartFocus .seg:not(.spot) { opacity: var(--chart-dim-opacity); }
+.spot { pointer-events: none; filter: drop-shadow(0 0 5px var(--chart-spot-glow)); }
+
+/* ---------- chart tooltip (portal on <body>) ---------- */
+.chartTip {
+  position: fixed;
+  z-index: var(--tip-z);
+  max-width: 260px;
+  box-sizing: border-box;
+  padding: 6px;
+  pointer-events: none;
+  color: var(--jet-black);
+  background: var(--frozen-water);
+}
+.tipTitle {
+  margin-bottom: 6px;
+  padding: 4px 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--pale-sky);
+  background-color: var(--yale-blue);
+  border-bottom: 3px solid var(--fresh-sky);
+  border-radius: 10px 0 0 0;
+}
+.chartTip .contentbox { margin-bottom: 0; }
+.miniPie { display: flex; align-items: center; gap: 10px; }
+.miniPie ul { list-style: none; margin: 0; padding: 0; font-size: 0.8rem; }
+.miniPieSwatch { display: inline-block; width: 10px; height: 10px; margin-right: 6px; }
+
+.chartTip { left: 0; top: 0; visibility: hidden; } /* the layout pass reveals it once it is placed */
+.chartTipPinned { pointer-events: auto; cursor: pointer; }
+.tipClose {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  z-index: 1;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--pale-sky);
+}
+
+.tipLines {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: calc(var(--tip-z) - 1);
+}
+.tipLine {
+  stroke: var(--tip-line);
+  stroke-width: 2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 2px var(--tip-line-halo));
+}
+.tipDot {
+  fill: var(--tip-line);
+  stroke: var(--tip-line-halo);
+  stroke-width: 2;
+}
+
+.groupButton { white-space: nowrap; }
+.countSlot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 2.2em;
+  margin-left: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--count-bg);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+.unitButton { font-size: 0.9rem; }
 
 /* pin-placing cursor; !important because Leaflet sets its own cursors on child elements */
 /*.pinCursor,

@@ -24,11 +24,12 @@ interface SiteInfo {
   timeFilter: TimeKey;
   setTimeFilter: (t: TimeKey) => void;
   removeLastPin: () => void;
+  outlinedAcres: number | null;
 }
 
 export function Spilloverlay({
   selectedSites, currentSelectedSite, compareMode, setCompareMode, clearSelection, focusSites, conLoading,
-  pinsActive, setPinsActive, pinCount, clearPins, statusFilter, setStatusFilter, timeFilter, setTimeFilter, removeLastPin
+  pinsActive, setPinsActive, pinCount, clearPins, statusFilter, setStatusFilter, timeFilter, setTimeFilter, removeLastPin, outlinedAcres
 }: SiteInfo) {
   const [uiHidden, setUiHidden] = useState(false);
 
@@ -73,13 +74,15 @@ export function Spilloverlay({
     </button>
     <SiteSummary selectedSite={currentSelectedSite} conLoading={conLoading}/>
     <SitesStatistics
-      selectedSites={selectedSites}
-      compareMode={compareMode}
-      onSiteClick={(id) => {
-        const s = selectedSites.get(id);
-        if (s) focusSites([s]);
-      }}
-    />
+  selectedSites={selectedSites}
+  compareMode={compareMode}
+  pinsActive={pinsActive}
+  outlinedAcres={outlinedAcres}
+  onSiteClick={(id) => {
+    const s = selectedSites.get(id);
+    if (s) focusSites([s]);
+  }}
+/>
   </div>
 );
 }
