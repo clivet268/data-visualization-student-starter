@@ -134,7 +134,7 @@ function drawHistogram(
       const grp = barsG.append('g').attr('class', styles.seg);
       const rect = grp.append('rect').attr('fill', fill).style('stroke', 'var(--chart-slice-stroke)').style('stroke-width', 0.5);
       const side = grp.append('path').attr('fill', shade(fill));
-      const top = grp.append('path').attr('fill', tint(fill)).style('display', i === b.sites.length - 1 ? null : 'none');
+      const top = grp.append('path').attr('fill', tint(fill)).style('display', i === b.sites.length - 1 ? '' : 'none');
       const apply = (gm: Geom) => {
         rect.attr('x', gm.x).attr('y', gm.yT).attr('width', gm.w).attr('height', Math.max(0, gm.yB - gm.yT));
         side.attr('d', `M${gm.x + gm.w},${gm.yT} l${dep},${-dep} V${gm.yB - dep} L${gm.x + gm.w},${gm.yB} Z`);
